@@ -1,29 +1,29 @@
 package mariadb
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/jrlmx2/stockAnalysis/lib/config"
-	"github.com/ziutek/mymysql/mysql"
+	_ "github.com/ziutek/mymysql/godrv"
 )
 
+const connectionString = "tcp:%s*%s/%s/%s"
+
 type Pool struct {
+	db *sql.DB
 }
 
 func NewPool(conf config.Database) (*Pool, error) {
-	db := mysql.New("tcp", "", conf.Host, conf.User, conf.Password, conf.Schema)
-	if err := db.Connect(); err != nil {
-		fmt.Println(err)
-	}
 
-	var query = "INSERT INTO symbols VALUES ('TVIX');"
-
-	rows, results, err := db.Query(query, nil)
+	db, err := sql.Open("mymysql", fmt.Sprintf(connectionString, conf.Host, conf.Schema, conf.User, conf.Password))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\n\nConnection error: %s", err)
+		return nil, err
 	}
+	defer db.Close()
 
-	fmt.Printf("Rows: %+v\nResults: %+v\n", rows, results)
+	db.SetMaxOpenConns(10)
 
-	return &Pool{}, nil
+	return &Pool{db: db}, nil
 }

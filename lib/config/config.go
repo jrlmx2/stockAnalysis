@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	Server map[string]Api
-	Logger LogConfig
+	Server   map[string]Api
+	Logger   LogConfig
+	Database Database
 }
 
 type LogConfig struct {
