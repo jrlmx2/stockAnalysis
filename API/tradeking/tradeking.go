@@ -1,21 +1,21 @@
-package main
+package tradeking
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/jrlmx2/stockAnalysis/lib/config"
-	"github.com/jrlmx2/stockAnalysis/lib/data/streaming"
-	"github.com/jrlmx2/stockAnalysis/lib/logger"
-	"github.com/jrlmx2/stockAnalysis/lib/mariadb"
-	"github.com/jrlmx2/stockAnalysis/lib/oauth"
+	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
+	"github.com/jrlmx2/stockAnalysis/utils/config"
+	"github.com/jrlmx2/stockAnalysis/utils/logger"
+	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
-func main() {
-	conf := config.ReadConfig()
+// EstablishEndpoints is used for appending tradeking public API calls to the Server
+func EstablishEndpoints() {
+	conf := config.ReadConfigPath("./api_config")
 	fmt.Printf("\n\n%+v\n\n", conf)
 
-	logger, _ := log.NewLogger(conf.Logger.Name, conf.Logger.Format, conf.Logger.File, conf.Logger.Level)
+	logger, _ := logger.NewLogger(conf.Logger.Name, conf.Logger.Format, conf.Logger.File, conf.Logger.Level)
 	fmt.Printf("%+v", logger)
 
 	oauthWrapper.SetCredentials(conf.Server["tradeking"].OAuthToken, conf.Server["tradeking"].OAuthSecret)

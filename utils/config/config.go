@@ -8,12 +8,14 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Config type wraps all the potential fields a configuration file might have
 type Config struct {
-	Server   map[string]Api
+	Server   map[string]API
 	Logger   LogConfig
 	Database Database
 }
 
+// LogConfig Describes the options used to setup the logger
 type LogConfig struct {
 	Name   string
 	Level  string
@@ -21,13 +23,15 @@ type LogConfig struct {
 	Format string
 }
 
-type Api struct {
+// API contains options and authentication values for API connectivity and query
+type API struct {
 	Key         string
 	Secret      string
 	OAuthToken  string
 	OAuthSecret string
 }
 
+// Database contains options for database authentication
 type Database struct {
 	User     string
 	Password string
@@ -35,7 +39,23 @@ type Database struct {
 	Schema   string
 }
 
-// Reads info from config file
+// ReadConfigPath reads a file into Config struct
+func ReadConfigPath(file string) *Config {
+	fmt.Printf("\n Reading: %s into %+v", file, Database{})
+	if _, err := os.Stat(file); err != nil {
+		fmt.Printf("\n Error reading config file %+v\n", err)
+		panic(err)
+	}
+
+	var config Config
+	if _, err := toml.DecodeFile(file, &config); err != nil {
+		fmt.Printf("\n Error decoding config file %+v\n", err)
+		panic(err)
+	}
+	return &config
+}
+
+// ReadConfig reads the command line -c filepath into a Config struct
 func ReadConfig() *Config {
 	configFile := flag.String("c", "", "Configuration file")
 	fmt.Printf("%+v", *configFile)

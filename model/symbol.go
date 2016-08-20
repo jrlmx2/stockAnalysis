@@ -1,4 +1,4 @@
-package streaming
+package model
 
 type Symbol struct {
 	ID     int
