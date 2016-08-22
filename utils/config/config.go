@@ -10,9 +10,10 @@ import (
 
 // Config type wraps all the potential fields a configuration file might have
 type Config struct {
-	Server   map[string]API
+	API      map[string]API
 	Logger   LogConfig
 	Database Database
+	Server   Server
 }
 
 // LogConfig Describes the options used to setup the logger
@@ -39,6 +40,11 @@ type Database struct {
 	Schema   string
 }
 
+// Server Describies
+type Server struct {
+	Address string
+}
+
 // ReadConfigPath reads a file into Config struct
 func ReadConfigPath(file string) *Config {
 	fmt.Printf("\n Reading: %s into %+v", file, Database{})
@@ -56,7 +62,7 @@ func ReadConfigPath(file string) *Config {
 }
 
 // ReadConfig reads the command line -c filepath into a Config struct
-func ReadConfig() *Config {
+func ReadConfig() (*Config, string) {
 	configFile := flag.String("c", "", "Configuration file")
 	fmt.Printf("%+v", *configFile)
 	if !flag.Parsed() {
@@ -74,5 +80,5 @@ func ReadConfig() *Config {
 		//handle config parsing error
 	}
 
-	return &config
+	return &config, *configFile
 }

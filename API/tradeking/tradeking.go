@@ -15,11 +15,11 @@ func EstablishEndpoints() {
 	conf := config.ReadConfigPath("./api_config")
 	fmt.Printf("\n\n%+v\n\n", conf)
 
-	logger, _ := logger.NewLogger(conf.Logger.Name, conf.Logger.Format, conf.Logger.File, conf.Logger.Level)
+	logger, _ := logger.NewLogger(conf.Logger)
 	fmt.Printf("%+v", logger)
 
-	oauthWrapper.SetCredentials(conf.Server["tradeking"].OAuthToken, conf.Server["tradeking"].OAuthSecret)
-	oauthWrapper.SetClient(conf.Server["tradeking"].Key, conf.Server["tradeking"].Secret)
+	oauthWrapper.SetCredentials(conf.API["tradeking"].OAuthToken, conf.API["tradeking"].OAuthSecret)
+	oauthWrapper.SetClient(conf.API["tradeking"].Key, conf.API["tradeking"].Secret)
 
 	pool, err := mariadb.NewPool(conf.Database)
 	if err != nil {

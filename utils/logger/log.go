@@ -3,40 +3,41 @@ package logger
 import (
 	"os"
 
+	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/op/go-logging"
 )
 
 // NewLogger wraps the logger creation code
-func NewLogger(name, format, location, level string) (*logging.Logger, error) {
-	var log = logging.MustGetLogger(name)
+func NewLogger(conf config.LogConfig) (*logging.Logger, error) {
+	var log = logging.MustGetLogger(conf.Name)
 
-	if format == "" {
-		format = `%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`
+	if conf.Format == "" {
+		conf.Format = `%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`
 	}
-	var logFormatter = logging.MustStringFormatter(format)
+	var logFormatter = logging.MustStringFormatter(conf.Format)
 
 	//regular log file
 	var stdlog *os.File
-	if _, err := os.Stat(location + ".log"); err != nil {
-		stdlog, err = os.Create(location + ".log")
+	if _, err := os.Stat(conf.File + ".log"); err != nil {
+		stdlog, err = os.Create(conf.File + ".log")
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		stdlog, err = os.Open(location + ".log")
+		stdlog, err = os.Open(conf.File + ".log")
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	var stderr *os.File
-	if _, err := os.Stat(location + ".err"); err != nil {
-		stderr, err = os.Create(location + ".err")
+	if _, err := os.Stat(conf.File + ".err"); err != nil {
+		stderr, err = os.Create(conf.File + ".err")
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		stderr, err = os.Open(location + ".err")
+		stderr, err = os.Open(conf.File + ".err")
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +49,7 @@ func NewLogger(name, format, location, level string) (*logging.Logger, error) {
 	backend2Formatter := logging.NewBackendFormatter(backend2, logFormatter)
 	backend1Leveled := logging.AddModuleLevel(backend1)
 
-	switch level {
+	switch conf.Level {
 	case "DEBUG":
 		backend1Leveled.SetLevel(logging.DEBUG, "")
 	case "INFO":
