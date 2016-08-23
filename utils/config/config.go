@@ -58,6 +58,7 @@ func ReadConfigPath(file string) *Config {
 		fmt.Printf("\n Error decoding config file %+v\n", err)
 		panic(err)
 	}
+	fmt.Printf("\n Read: %s into %+v", file, config)
 	return &config
 }
 

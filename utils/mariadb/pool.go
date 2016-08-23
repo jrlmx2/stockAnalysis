@@ -23,9 +23,8 @@ func NewPool(conf config.Database) (*Pool, error) {
 		fmt.Printf("\n\nConnection error: %s", err)
 		return nil, err
 	}
-	defer db.Close()
 
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(20)
 
 	return &Pool{db: db}, nil
 }

@@ -16,7 +16,7 @@ type Quote struct {
 	Quote QuoteDetails `xml:"quote"`
 }
 
-func (unm *Quote) unmarshal(xmlIn string) (unmarshaler, error) {
+func (unm *Quote) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return unm, xml.Unmarshal([]byte(xmlIn), unm)
 }
 

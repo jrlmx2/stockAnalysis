@@ -1,5 +1,5 @@
 package model
 
 type Unmarshalable interface {
-	Unmarshal(string) (unmarshaler, error)
+	Unmarshal(string) (Unmarshalable, error)
 }

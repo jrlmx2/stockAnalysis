@@ -3,15 +3,18 @@ package model
 import (
 	"encoding/xml"
 	"fmt"
+
+	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
-func NewTrade() *Trade { return &Trade{} }
+func NewTrade() *Trade { return &Trade{repository: repository} }
 
 type Trade struct {
-	Trade *TradeDetails `xml:"trade"`
+	Trade      *TradeDetails `xml:"trade"`
+	repository *mariadb.Pool
 }
 
-func (tr *Trade) unmarshal(xmlIn string) (unmarshaler, error) {
+func (tr *Trade) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return tr, xml.Unmarshal([]byte(xmlIn), tr)
 }
 
