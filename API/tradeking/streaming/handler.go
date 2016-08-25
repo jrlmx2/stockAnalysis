@@ -12,7 +12,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-func ProcessStreams(ch chan *bufio.Reader, log *logging.Logger) chan model.Unmarshalable {
+func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	var wg *sync.WaitGroup
 	out := make(chan model.Unmarshalable, 0)
 
@@ -26,7 +26,7 @@ func ProcessStreams(ch chan *bufio.Reader, log *logging.Logger) chan model.Unmar
 				return
 			}
 			select {
-			case stream, ok := <-ch:
+			case stream, ok := <-handler:
 				if ok {
 					go streamListener(stream, out, wg, die, log)
 					wg.Add(1)
@@ -89,7 +89,9 @@ func unmarshal(in string) (model.Unmarshalable, error) {
 	}
 
 	if strings.Contains(in, "trade") {
-		return model.NewTrade().Unmarshal(in)
+		trade := model.NewTrade().Unmarshal(in)
+		trade.Save()
+		return trade
 	}
 
 	fmt.Printf("XML not identified %s", in)

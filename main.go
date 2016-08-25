@@ -7,8 +7,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/op/go-logging"
 
+	"github.com/jrlmx2/stockAnalysis/API/tradeking"
+	"github.com/jrlmx2/stockAnalysis/model"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
+	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
 func main() {
@@ -25,14 +28,17 @@ func main() {
 	}
 
 	//connect database
-	//db, err := mariadb.NewPool(conf.Database)
+	db, err := mariadb.NewPool(conf.Database)
 	if err != nil {
 		log.Criticalf("Error opening database at host %s", conf.Database.Host)
 		panic(fmt.Sprintf("Error opening database at host %s", conf.Database.Host))
 	}
 
+	model.SetRepository(db)
+
 	//establish endpoints
 	endpoints := mux.NewRouter()
+	endpoints = tradeking.EstablishEndpoints(endpoints)
 
 	//wrap endpoints
 	loggedEndpoints := Log(endpoints, log)

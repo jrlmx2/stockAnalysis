@@ -13,11 +13,13 @@ const (
 	uri = "market/quotes"
 )
 
+var handler = make(chan *bufio.Reader, 0)
+
 func makeQuery(r []string) string {
 	return "?" + strings.Join(r, "&")
 }
 
-func OpenStream(r []string, handler chan *bufio.Reader) error {
+func OpenStream(r []string) error {
 	req, err := oauthWrapper.Stream(uri+makeQuery(r), "GET")
 	if err != nil {
 		return err

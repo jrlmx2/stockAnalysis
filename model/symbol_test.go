@@ -25,19 +25,35 @@ func TestSave001(t *testing.T) {
 	}
 	setup()
 
-	s := NewSymbol()
-	s.Symbol = "UVXY"
+	s := NewSymbol("UVXY")
 	fmt.Println(s)
 	fmt.Println(s.Save())
 	fmt.Println(s)
 }
 
-func TestSaveAll001(t *testing.T) {
+func TestLoadSymbol001(t *testing.T) {
+	setup()
+
+	s := NewSymbol("UVXY")
+	fmt.Printf("\n\nLoaded: %s\n\n", s)
+}
+
+func TestDelete001(t *testing.T) {
+	setup()
+
+	s := NewSymbol("UVXY")
+	s.Load()
+	fmt.Printf("\n\nLoaded: %s\n\n", s)
+	s.Delete()
+}
+
+/*func TestSaveAll001(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
 	setup()
 
+	fmt.Println("Saving a bunch of symbols")
 	s := NewSymbolCollection()
 	sym1 := NewSymbol()
 	sym1.Symbol = "UVXY"
@@ -50,10 +66,11 @@ func TestSaveAll001(t *testing.T) {
 	fmt.Println(s)
 }
 
-func TestSymbol001(t *testing.T) {
+func TestSymbol001(t *testing.T) { //works well
 	setup()
+	searchSymbol := "x"
+	fmt.Println("Finding Symbols like " + searchSymbol)
 	s := NewSymbolCollection()
+	s.FindLike(searchSymbol)
 	fmt.Println(s)
-	s.FindLike("X")
-	fmt.Println(s)
-}
+}*/

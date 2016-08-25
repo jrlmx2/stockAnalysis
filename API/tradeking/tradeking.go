@@ -2,16 +2,16 @@ package tradeking
 
 import (
 	"fmt"
-	"time"
+	"net/http"
+	"strings"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
-	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
 // EstablishEndpoints is used for appending tradeking public API calls to the Server
-func EstablishEndpoints() {
+func EstablishEndpoints(handler http.Handler) http.Handler {
 	conf := config.ReadConfigPath("./api_config")
 	fmt.Printf("\n\n%+v\n\n", conf)
 
@@ -21,11 +21,20 @@ func EstablishEndpoints() {
 	oauthWrapper.SetCredentials(conf.API["tradeking"].OAuthToken, conf.API["tradeking"].OAuthSecret)
 	oauthWrapper.SetClient(conf.API["tradeking"].Key, conf.API["tradeking"].Secret)
 
-	pool, err := mariadb.NewPool(conf.Database)
-	if err != nil {
-		panic(err)
-	}
+	streams := streaming.ProcessStreams(logger)
+	streams = nil // do somethign with streams
 
-	pool.SaveOne(*streaming.TradeDetails{Last: 34.2, Symbol: "TVIX", SymbolID: 5, Timestamp: time.Now().Unix(), Amount: 5000, Vwap: 33.2})
-	//streaming.OpenStream([]string{"symbols=TVIX"})
+}
+
+func StreamOpener(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	symbols := strings.Join(r.Form["symbols"], ",")
+
+}
+
+func Endpoints(handler http.Handler) http.Handler {
+	handler.HandleFunc("/stream", StreamOpener).Methods("GET")
+
+	return handler
 }
