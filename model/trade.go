@@ -63,26 +63,30 @@ func (t *Trade) Delete() error {
 
 	_, _, err := t.repository.Exec(fmt.Sprintf(tdelete, t.Trade.ID))
 	if err != nil {
-		return NewModelError(QueryError)
+		return NewModelError(Query)
 	}
 	return nil
 }
 
 func (t *Trade) Save() error {
-	if len(t.Trade.Symbol) < 1 {
-		return NewModelError(NoSymbolError)
+	if len(t.Trade.Symbol) < 1 && t.Symbol == nil {
+		return NewModelError(NoSymbol)
 	}
 
-	t.Symbol = NewSymbol(t.Trade.Symbol)
-	err := t.Symbol.Load()
-	if err != nil {
-		return NewModelError(TradeSaveError, err, t)
+	if t.Symbol == nil {
+		t.Symbol = NewSymbol(t.Trade.Symbol)
+		err := t.Symbol.Load()
+		if err != nil {
+			return NewModelError(TradeSave, err, t)
+		}
 	}
 
-	_, _, err = t.repository.Exec(fmt.Sprintf(tinsert, t.Data()))
+	_, id, err := t.repository.Exec(fmt.Sprintf(tinsert, t.Data()))
 	if err != nil {
-		return NewModelError(QueryError, err)
+		return NewModelError(Query, err)
 	}
+
+	t.Trade.ID = id
 
 	return nil
 }

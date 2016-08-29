@@ -26,25 +26,33 @@ type Symbol struct {
 
 func NewSymbol(symbol string) *Symbol { return &Symbol{repository: repository, Symbol: symbol} }
 
+func NewSymbolScan(rows *sql.Rows) (*Symbol, error) {
+	s := &Symbol{repository: repository}
+	id := &s.ID
+	symbol := &s.Symbol
+
+	return s, rows.Scan(id, symbol)
+}
+
 func (s *Symbol) Data() string {
 	return fmt.Sprintf(sinsertRecord, s.Symbol)
 }
 
 func (s *Symbol) Delete() error {
 	if s.ID == 0 {
-		return NewModelError(NoIDError)
+		return NewModelError(NoID)
 	}
 
 	_, _, err := s.repository.Exec(fmt.Sprintf(sdelete, s.ID))
 	if err != nil {
-		return NewModelError(QueryError)
+		return NewModelError(Query)
 	}
 	return nil
 }
 
 func (s *Symbol) Save() error {
 	if s.Symbol == "" {
-		return NewModelError(NoSymbolError)
+		return NewModelError(NoSymbol)
 	}
 
 	if s.ID > 0 { // no need for overwriting
@@ -54,7 +62,7 @@ func (s *Symbol) Save() error {
 	fmt.Printf("%s", fmt.Sprintf(sinsert, s.Symbol))
 	_, id, err := s.repository.Exec(fmt.Sprintf(sinsert, s.Symbol))
 	if err != nil {
-		return NewModelError(QueryError, fmt.Sprintf("%s", err))
+		return NewModelError(Query, fmt.Sprintf("%s", err))
 	}
 
 	s.ID = id
@@ -67,11 +75,11 @@ func (s *Symbol) Load() error {
 
 	if s.ID == 0 {
 		if s.Symbol == "" {
-			return NewModelError(EmptySymbolError)
+			return NewModelError(EmptySymbol)
 		} else {
 			row = s.repository.QueryRow(fmt.Sprintf(sfindSymbol, s.Symbol))
 		}
-		return NewModelError(NoIDError)
+		return NewModelError(NoID)
 	} else {
 		row = s.repository.QueryRow(fmt.Sprintf(sfindOne, s.ID))
 	}
@@ -88,7 +96,7 @@ func (s *Symbol) LoadTrades() ([]*Trade, error) {
 
 	rows, err := s.repository.Query(fmt.Sprintf(tfindTrade, s.ID))
 	if err != nil {
-		return nil, NewModelError(QueryError, err)
+		return nil, NewModelError(Query, err)
 	}
 
 	return ScanNewTrades(s, rows)
