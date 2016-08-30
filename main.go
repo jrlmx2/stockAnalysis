@@ -36,6 +36,7 @@ func main() {
 
 	model.SetRepository(db)
 
+	log.Info("Database connected")
 	//establish endpoints
 	endpoints := mux.NewRouter()
 	endpoints = tradeking.EstablishEndpoints(endpoints)

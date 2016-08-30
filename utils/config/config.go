@@ -14,6 +14,7 @@ type Config struct {
 	Logger   LogConfig
 	Database Database
 	Server   Server
+	Stocks   Stocks
 }
 
 // LogConfig Describes the options used to setup the logger
@@ -38,6 +39,10 @@ type Database struct {
 	Password string
 	Host     string
 	Schema   string
+}
+
+type Stocks struct {
+	Symbols string
 }
 
 // Server Describies

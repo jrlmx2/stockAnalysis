@@ -3,16 +3,18 @@ package tradeking
 import (
 	"fmt"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
+	"github.com/jrlmx2/stockAnalysis/utils/oauth"
 )
 
 // EstablishEndpoints is used for appending tradeking public API calls to the Server
-func EstablishEndpoints(handler http.Handler) http.Handler {
-	conf := config.ReadConfigPath("./api_config")
+func EstablishEndpoints(handler *mux.Router) *mux.Router {
+	conf := config.ReadConfigPath("API/tradeking/api.conf")
 	fmt.Printf("\n\n%+v\n\n", conf)
 
 	logger, _ := logger.NewLogger(conf.Logger)
@@ -22,18 +24,26 @@ func EstablishEndpoints(handler http.Handler) http.Handler {
 	oauthWrapper.SetClient(conf.API["tradeking"].Key, conf.API["tradeking"].Secret)
 
 	streams := streaming.ProcessStreams(logger)
-	streams = nil // do somethign with streams
+	if streams != nil {
+		fmt.Println("streams setup")
+	} // do somethign with streams
+
+	return Endpoints(handler)
 
 }
 
 func StreamOpener(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	symbols := strings.Join(r.Form["symbols"], ",")
+	symbols := fmt.Sprintf("symbols=%s", r.Form["symbols"])
+
+	streaming.OpenStream([]string{symbols})
+
+	w.Write([]byte("Done."))
 
 }
 
-func Endpoints(handler http.Handler) http.Handler {
+func Endpoints(handler *mux.Router) *mux.Router {
 	handler.HandleFunc("/stream", StreamOpener).Methods("GET")
 
 	return handler

@@ -13,7 +13,7 @@ import (
 )
 
 func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
-	var wg *sync.WaitGroup
+	var wg sync.WaitGroup
 	out := make(chan model.Unmarshalable, 0)
 
 	die := term.NewTerm() //watch for sigterm, kill and others die will be 1 when terminated
@@ -28,7 +28,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 			select {
 			case stream, ok := <-handler:
 				if ok {
-					go streamListener(stream, out, wg, die, log)
+					go streamListener(stream, out, &wg, die, log)
 					wg.Add(1)
 				} else {
 					log.Warning("Channel closed!")
@@ -83,17 +83,17 @@ func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, wg *sync
 }
 
 func unmarshal(in string) (model.Unmarshalable, error) {
-
+	fmt.Printf("\nGot in: %s\n\n", in)
 	if strings.Contains(in, "quote") {
-		return model.NewQuote().Unmarshal(in)
+		return model.NewQuoteU().Unmarshal(in)
 	}
 
 	if strings.Contains(in, "trade") {
-		trade := model.NewTrade().Unmarshal(in)
+		trade, err := model.NewTradeU().Unmarshal(in)
 		trade.Save()
-		return trade
+		return trade, err
 	}
 
 	fmt.Printf("XML not identified %s", in)
-	return model.NewQuote(), nil
+	return model.NewQuoteU(), nil
 }

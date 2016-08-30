@@ -22,6 +22,8 @@ type Quote struct {
 	Symbol     *Symbol
 }
 
+func NewQuoteU() *Quote { return &Quote{repository: repository} }
+
 func (unm *Quote) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return unm, xml.Unmarshal([]byte(xmlIn), unm)
 }
