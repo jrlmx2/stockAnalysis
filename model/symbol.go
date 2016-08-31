@@ -16,6 +16,7 @@ const (
 	sinsert       = "insert into symbols values (NULL,'%s',NULL)"
 	sdelete       = "delete from symbols where id=%d"
 	sinsertRecord = "(NULL, %s, NULL)"
+	qload         = "select * from quotes where symbol_id=%d"
 )
 
 type Symbol struct {
@@ -90,6 +91,16 @@ func (s *Symbol) Load() error {
 		return nil
 	}
 
+}
+
+func (s *Symbol) LoadQuote() *Quote {
+	if s.ID == 0 {
+		s.Load()
+	}
+
+	row := s.repository.QueryRow(fmt.Sprintf(qload, s.ID))
+
+	return ScanQuote(row)
 }
 
 func (s *Symbol) LoadTrades() ([]*Trade, error) {

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"time"
@@ -31,6 +32,12 @@ type Quote struct {
 }
 
 func NewQuoteU() *Quote { return &Quote{repository: repository} }
+
+func ScanQuote(row *sql.Row) *Quote {
+	quote := NewQuoteU()
+	row.Scan(&quote.ID, &quote.Ask, &quote.AskVolume, &quote.Bid, &quote.BidVolume, &quote.SymbolID, &quote.Timestamp)
+	return quote
+}
 
 func (unm *Quote) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return unm, xml.Unmarshal([]byte(xmlIn), unm)
