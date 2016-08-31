@@ -26,7 +26,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 			select {
 			case stream, ok := <-handler:
 				if ok {
-					go streamListener(stream, out, die, log)
+					go streamListener(stream, &out, die, log)
 					fmt.Println("Found new stream")
 				} else {
 					log.Warning("Channel closed!")
@@ -41,7 +41,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	return out
 }
 
-func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, die *int, log *logging.Logger) {
+func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, die *int, log *logging.Logger) {
 	content := ""
 	for {
 		if *die == 1 {
@@ -64,12 +64,12 @@ func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, die *int
 
 		if strings.Contains(sline, "/") && (strings.Contains(sline, "quote") || strings.Contains(sline, "trade")) {
 			content += sline
-			fmt.Printf("CONTENT: %+v\n\n", content)
-			parsedContent, err := unmarshal(content)
+
+			_, err := unmarshal(strings.Trim(strings.Trim(content, "\n"), " "))
 			if err != nil {
 				log.Warningf("Unmarshalling string %s failed with %s", content, err)
 			}
-			out <- parsedContent
+			//*out <- parsedContent
 			content = ""
 		} else {
 			content += sline
@@ -80,12 +80,14 @@ func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, die *int
 func unmarshal(in string) (model.Unmarshalable, error) {
 	fmt.Printf("\nGot in: %s\n\n", in)
 	if strings.Contains(in, "quote") {
-		return model.NewQuoteU().Unmarshal(in)
+		q, _ := model.NewQuoteU().Unmarshal(in)
+		err := q.Save()
+		return q, err
 	}
 
 	if strings.Contains(in, "trade") {
-		trade, err := model.NewTradeU().Unmarshal(in)
-		trade.Save()
+		trade, _ := model.NewTradeU().Unmarshal(in)
+		err := trade.Save()
 		return trade, err
 	}
 

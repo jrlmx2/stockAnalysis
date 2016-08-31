@@ -16,16 +16,16 @@ const (
 	tdelete     = "delete from trades where id=%d"
 )
 
-func NewTrade(s *Symbol) *Trade { return &Trade{repository: repository, Symbol: s} }
+func NewTrade(s string) *Trade { return &Trade{repository: repository, Symbol: s} }
 
-func NewTradeU() *Trade { return &Trade{repository: repository, Symbol: nil} }
+func NewTradeU() *Trade { return &Trade{repository: repository} }
 
-func ScanNewTrades(s *Symbol, rows *sql.Rows) ([]*Trade, error) {
+func ScanNewTrades(s string, rows *sql.Rows) ([]*Trade, error) {
 	defer rows.Close()
 	trades := make([]*Trade, 0)
 	for rows.Next() {
 		t := NewTrade(s)
-		err := rows.Scan(&t.Trade.ID, &t.Trade.Last, &t.Trade.Timestamp, &t.Trade.TradedVolume, &t.Trade.VolumeWeightedAverage)
+		err := rows.Scan(&t.ID, &t.Last, &t.Timestamp, &t.TradedVolume, &t.VolumeWeightedAverage)
 		if err != nil {
 			return nil, err
 		}
@@ -36,34 +36,31 @@ func ScanNewTrades(s *Symbol, rows *sql.Rows) ([]*Trade, error) {
 }
 
 type Trade struct {
-	Trade      *TradeDetails `xml:"trade"`
-	Symbol     *Symbol
-	repository *mariadb.Pool
-}
-
-func (tr *Trade) Unmarshal(xmlIn string) (Unmarshalable, error) {
-	return tr, xml.Unmarshal([]byte(xmlIn), tr)
-}
-
-type TradeDetails struct {
+	Trade                 xml.Name `xml:"trade"`
 	ID                    int64
+	SymbolID              int64
 	Last                  float32 `xml:"last"`
 	Symbol                string  `xml:"symbol"`
 	Timestamp             int     `xml:"timestamp"`
 	TradedVolume          int64   `xml:"vl"`
 	VolumeWeightedAverage float32 `xml:"vwap"`
+	repository            *mariadb.Pool
+}
+
+func (t *Trade) Unmarshal(xmlIn string) (Unmarshalable, error) {
+	return t, xml.Unmarshal([]byte(xmlIn), t)
 }
 
 func (td *Trade) Data() string {
-	return fmt.Sprintf("(NULL,%d,%f,%d,%f,%d,NULL)", td.Symbol.ID, td.Trade.Last, td.Trade.TradedVolume, td.Trade.VolumeWeightedAverage, td.Trade.Timestamp)
+	return fmt.Sprintf("(NULL,%f,%d,%d,%d,%f,NULL)", td.Last, td.SymbolID, td.Timestamp, td.TradedVolume, td.VolumeWeightedAverage)
 }
 
 func (t *Trade) Delete() error {
-	if t.Trade.ID == 0 {
+	if t.ID == 0 {
 		return NewModelError(NoTradeID)
 	}
 
-	_, _, err := t.repository.Exec(fmt.Sprintf(tdelete, t.Trade.ID))
+	_, _, err := t.repository.Exec(fmt.Sprintf(tdelete, t.ID))
 	if err != nil {
 		return NewModelError(Query)
 	}
@@ -71,24 +68,27 @@ func (t *Trade) Delete() error {
 }
 
 func (t *Trade) Save() error {
-	if len(t.Trade.Symbol) < 1 && t.Symbol == nil {
+	fmt.Printf("%+v", t)
+	if len(t.Symbol) < 1 {
 		return NewModelError(NoSymbol)
 	}
 
-	if t.Symbol == nil {
-		t.Symbol = NewSymbol(t.Trade.Symbol)
-		err := t.Symbol.Load()
+	if t.SymbolID == 0 {
+		Symbol := NewSymbol(t.Symbol)
+		err := Symbol.Load()
 		if err != nil {
 			return NewModelError(TradeSave, err, t)
 		}
+		t.SymbolID = Symbol.ID
 	}
 
 	_, id, err := t.repository.Exec(fmt.Sprintf(tinsert, t.Data()))
 	if err != nil {
+		fmt.Printf("No Query Err %+v", t)
 		return NewModelError(Query, err)
 	}
 
-	t.Trade.ID = id
+	t.ID = id
 
 	return nil
 }

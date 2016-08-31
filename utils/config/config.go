@@ -70,20 +70,19 @@ func ReadConfigPath(file string) *Config {
 // ReadConfig reads the command line -c filepath into a Config struct
 func ReadConfig() (*Config, string) {
 	configFile := flag.String("c", "", "Configuration file")
-	fmt.Printf("%+v", *configFile)
 	if !flag.Parsed() {
 		flag.Parse()
 	}
 
 	if _, err := os.Stat(*configFile); err != nil {
-		fmt.Printf("%+v\n", err)
-		//handle file doesn't exist error
+		fmt.Printf("\nError: %+v\n", err)
+		panic(err)
 	}
 
 	var config Config
 	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
-		fmt.Printf("%+v\n", err)
-		//handle config parsing error
+		fmt.Printf("\n Error: %+v\n", err)
+		panic(err)
 	}
 
 	return &config, *configFile

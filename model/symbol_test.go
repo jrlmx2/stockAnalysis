@@ -26,8 +26,7 @@ func TestSave001(t *testing.T) {
 	setup()
 
 	s := NewSymbol("UVXY")
-	fmt.Println(s)
-	fmt.Println(s.Save())
+	s.Save()
 	fmt.Println(s)
 }
 
@@ -35,6 +34,7 @@ func TestLoadSymbol001(t *testing.T) {
 	setup()
 
 	s := NewSymbol("UVXY")
+	s.Load()
 	fmt.Printf("\n\nLoaded: %s\n\n", s)
 }
 
@@ -43,7 +43,7 @@ func TestDelete001(t *testing.T) {
 
 	s := NewSymbol("UVXY")
 	s.Load()
-	fmt.Printf("\n\nLoaded: %s\n\n", s)
+	fmt.Printf("\n\nDeleting: %s\n\n", s)
 	s.Delete()
 }
 

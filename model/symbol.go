@@ -13,7 +13,7 @@ const (
 	sfindSymbols  = "select id, symbol from symbols where symbol in ('%s')"
 	sfindSymbol   = "select id, symbol from symbols where symbol = '%s'"
 	sfindMany     = "select id, symbol from symbols where id in (%s)"
-	sinsert       = "insert into symbols values %s"
+	sinsert       = "insert into symbols values (NULL,'%s',NULL)"
 	sdelete       = "delete from symbols where id=%d"
 	sinsertRecord = "(NULL, %s, NULL)"
 )
@@ -59,7 +59,7 @@ func (s *Symbol) Save() error {
 		return nil
 	}
 
-	fmt.Printf("%s", fmt.Sprintf(sinsert, s.Symbol))
+	fmt.Printf("%s\n", fmt.Sprintf(sinsert, s.Symbol))
 	_, id, err := s.repository.Exec(fmt.Sprintf(sinsert, s.Symbol))
 	if err != nil {
 		return NewModelError(Query, fmt.Sprintf("%s", err))
@@ -71,22 +71,25 @@ func (s *Symbol) Save() error {
 }
 
 func (s *Symbol) Load() error {
-	var row *sql.Row
 
 	if s.ID == 0 {
 		if s.Symbol == "" {
 			return NewModelError(EmptySymbol)
 		} else {
-			row = s.repository.QueryRow(fmt.Sprintf(sfindSymbol, s.Symbol))
+			row := s.repository.QueryRow(fmt.Sprintf(sfindSymbol, s.Symbol))
+			s.parseRow(row)
+
+			if s.ID == 0 {
+				s.Save()
+			}
+
+			fmt.Printf("Loaded Symbol: %+v\n", s)
+			return nil
 		}
-		return NewModelError(NoID)
 	} else {
-		row = s.repository.QueryRow(fmt.Sprintf(sfindOne, s.ID))
+		return nil
 	}
 
-	s.parseRow(row)
-
-	return nil
 }
 
 func (s *Symbol) LoadTrades() ([]*Trade, error) {
@@ -99,7 +102,7 @@ func (s *Symbol) LoadTrades() ([]*Trade, error) {
 		return nil, NewModelError(Query, err)
 	}
 
-	return ScanNewTrades(s, rows)
+	return ScanNewTrades(s.Symbol, rows)
 }
 
 func (s *Symbol) parseRow(row *sql.Row) error {

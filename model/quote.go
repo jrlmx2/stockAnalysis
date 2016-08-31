@@ -11,15 +11,23 @@ import (
 const (
 	quoteDateFormat = "2006-01-02T15:04:05-07:00"
 	readableDate    = "01 Jan 2006 at 15:04:05 MST"
-	qinsert         = "insert into quotes values %s"
+	qinsert         = "insert into quotes values %s on duplicate key update %s"
 )
 
-func NewQuote(s *Symbol) *Quote { return &Quote{repository: repository, Symbol: s} }
+func NewQuote(s string) *Quote { return &Quote{repository: repository, Symbol: s} }
 
 type Quote struct {
 	repository *mariadb.Pool
-	Quote      *QuoteDetails `xml:"quote"`
-	Symbol     *Symbol
+	Quote      xml.Name `xml:"quote"`
+	ID         int64
+	SymbolID   int64
+	Ask        float32 `xml:"ask"`
+	AskVolume  int     `xml:"asksz"`
+	Bid        float32 `xml:"bid"`
+	BidVolume  int     `xml:"bidsz"`
+	Datetime   string  `xml:"datetime"`
+	Symbol     string  `xml:"symbol"`
+	Timestamp  int     `xml:"timestamp"`
 }
 
 func NewQuoteU() *Quote { return &Quote{repository: repository} }
@@ -28,23 +36,12 @@ func (unm *Quote) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return unm, xml.Unmarshal([]byte(xmlIn), unm)
 }
 
-type QuoteDetails struct {
-	ID        int64
-	Ask       float32 `xml:"ask"`
-	AskVolume int     `xml:"asksz"`
-	Bid       float32 `xml:"bid"`
-	BidVolume int     `xml:"bidsz"`
-	Datetime  string  `xml:"datetime"`
-	Symbol    string  `xml:"symbol"`
-	Timestamp int     `xml:"timestamp"`
-}
-
-func (q *Quote) Data() string {
-	return fmt.Sprintf("(NULL, %f, %d, %f, %d, %d, %d)", q.Quote.Ask, q.Quote.AskVolume, q.Quote.Bid, q.Quote.BidVolume, q.Symbol.ID, q.Quote.Timestamp)
+func (q *Quote) Data() (string, string) {
+	return fmt.Sprintf("(NULL, %f, %d, %f, %d, %d, %d)", q.Ask, q.AskVolume, q.Bid, q.BidVolume, q.SymbolID, q.Timestamp), fmt.Sprintf(" ask=%f, askvolume=%d, bid=%f, bidvolume=%d, timestamp=%d", q.Ask, q.AskVolume, q.Bid, q.BidVolume, q.Timestamp)
 }
 
 func (q *Quote) Date() (string, error) {
-	t, err := time.Parse(quoteDateFormat, q.Quote.Datetime)
+	t, err := time.Parse(quoteDateFormat, q.Datetime)
 	if err != nil {
 		return "", err
 	}
@@ -53,24 +50,27 @@ func (q *Quote) Date() (string, error) {
 }
 
 func (q *Quote) Save() error {
-	if q.Symbol == nil && q.Quote.Symbol == "" {
+	if q.Symbol == "" {
 		return NewModelError(EmptySymbol)
 	}
 
-	if q.Symbol == nil {
-		q.Symbol = NewSymbol(q.Quote.Symbol)
-		err := q.Symbol.Load()
+	if q.SymbolID == 0 {
+		Symbol := NewSymbol(q.Symbol)
+		err := Symbol.Load()
 		if err != nil {
 			return NewModelError(QuoteSave, err, q)
 		}
+		q.SymbolID = Symbol.ID
 	}
 
-	_, id, err := q.repository.Exec(fmt.Sprintf(qinsert, q.Data()))
+	insData, updateData := q.Data()
+	fmt.Printf("\n%s\n", fmt.Sprintf(qinsert, insData, updateData))
+	_, id, err := q.repository.Exec(fmt.Sprintf(qinsert, insData, updateData))
 	if err != nil {
 		return NewModelError(Query, err)
 	}
 
-	q.Quote.ID = id
+	q.ID = id
 
 	return nil
 }

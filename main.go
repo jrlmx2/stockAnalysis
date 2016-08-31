@@ -47,7 +47,7 @@ func main() {
 	http.Handle("/", loggedEndpoints)
 
 	//start server
-	log.Fatal(http.ListenAndServe(conf.Server.Address+":8080", nil))
+	log.Fatal(http.ListenAndServe(conf.Server.Address, nil))
 }
 
 // Log wrapper function for the http server
