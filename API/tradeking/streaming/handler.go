@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/jrlmx2/stockAnalysis/model"
@@ -13,7 +12,6 @@ import (
 )
 
 func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
-	var wg sync.WaitGroup
 	out := make(chan model.Unmarshalable, 0)
 
 	die := term.NewTerm() //watch for sigterm, kill and others die will be 1 when terminated
@@ -28,24 +26,22 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 			select {
 			case stream, ok := <-handler:
 				if ok {
-					go streamListener(stream, out, &wg, die, log)
-					wg.Add(1)
+					go streamListener(stream, out, die, log)
+					fmt.Println("Found new stream")
 				} else {
 					log.Warning("Channel closed!")
 				}
 			default:
 				log.Info("No stream ready, moving on.")
 			}
-			wg.Done()
 			time.Sleep(d)
 		}
 	}()
-	wg.Add(1)
 
 	return out
 }
 
-func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, wg *sync.WaitGroup, die *int, log *logging.Logger) {
+func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, die *int, log *logging.Logger) {
 	content := ""
 	for {
 		if *die == 1 {
@@ -78,7 +74,6 @@ func streamListener(reader *bufio.Reader, out chan model.Unmarshalable, wg *sync
 		} else {
 			content += sline
 		}
-		wg.Done()
 	}
 }
 

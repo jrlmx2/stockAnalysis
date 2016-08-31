@@ -18,7 +18,7 @@ const (
 
 func NewTrade(s *Symbol) *Trade { return &Trade{repository: repository, Symbol: s} }
 
-func NewTradeU() *Trade { return &Trade{repository: repository} }
+func NewTradeU() *Trade { return &Trade{repository: repository, Symbol: nil} }
 
 func ScanNewTrades(s *Symbol, rows *sql.Rows) ([]*Trade, error) {
 	defer rows.Close()

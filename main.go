@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/op/go-logging"
+	logging "github.com/op/go-logging"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking"
 	"github.com/jrlmx2/stockAnalysis/model"
@@ -44,12 +44,14 @@ func main() {
 	//wrap endpoints
 	loggedEndpoints := Log(endpoints, log)
 
+	http.Handle("/", loggedEndpoints)
+
 	//start server
-	http.ListenAndServe(conf.Server.Address, loggedEndpoints)
+	log.Fatal(http.ListenAndServe(conf.Server.Address+":8080", nil))
 }
 
 // Log wrapper function for the http server
-func Log(handler http.Handler, log *logging.Logger) http.Handler {
+func Log(handler *mux.Router, log *logging.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Infof("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
