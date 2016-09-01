@@ -33,6 +33,7 @@ func (w *WatchList) GetSymbols() error {
 	if err != nil {
 		return NewModelError(Query, err)
 	}
+	defer rows.Close()
 
 	symbols := make([]*Symbol, 0)
 	stocks := make([]*Stock, 0)

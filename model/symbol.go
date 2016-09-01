@@ -101,6 +101,7 @@ func (s *Symbol) LoadTrades() ([]*Trade, error) {
 	if err != nil {
 		return nil, NewModelError(Query, err)
 	}
+	defer rows.Close()
 
 	return ScanNewTrades(s.Symbol, rows)
 }

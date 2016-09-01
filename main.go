@@ -33,6 +33,7 @@ func main() {
 		log.Criticalf("Error opening database at host %s", conf.Database.Host)
 		panic(fmt.Sprintf("Error opening database at host %s", conf.Database.Host))
 	}
+	defer db.Close()
 
 	model.SetRepository(db)
 

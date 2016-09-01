@@ -17,6 +17,10 @@ type Pool struct {
 	db *sql.DB
 }
 
+func (p *Pool) Close() error {
+	return p.db.Close()
+}
+
 //NewPool wraps the database connection
 func NewPool(conf config.Database) (*Pool, error) {
 	if connectString == "" {
