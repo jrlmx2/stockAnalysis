@@ -15,3 +15,8 @@ User="stockAnalysisDev"
 Password="root"
 Host="localhost:3306"
 Schema="stocks_dev"
+
+[dump]
+file="C:\mariadb\createDump.cmd"
+interval="24h"
+out="C:\Users\jrlmx\Dropbox\stocks\backup-stocks.sql"
