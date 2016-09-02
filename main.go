@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/hydrogen18/stoppableListener"
 	logging "github.com/op/go-logging"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking"
@@ -12,9 +15,11 @@ import (
 	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
+	"github.com/jrlmx2/stockAnalysis/utils/term"
 )
 
 func main() {
+
 	//read config
 	conf, file := config.ReadConfig()
 	if conf == nil {
@@ -37,6 +42,23 @@ func main() {
 	model.SetRepository(db)
 
 	log.Info("Database connected")
+
+	//thread with a daily backup for the database
+	go db.BackupDB(conf.Dump, conf.Database)
+
+	// Setup Server
+	listener, err := net.Listen("tcp", conf.Server.Address)
+	if err != nil {
+		term.Kill()
+		panic(err)
+	}
+
+	sl, err := stoppableListener.New(listener)
+	if err != nil {
+		term.Kill()
+		panic(err)
+	}
+
 	//establish endpoints
 	endpoints := mux.NewRouter()
 	endpoints = tradeking.EstablishEndpoints(endpoints)
@@ -46,8 +68,27 @@ func main() {
 
 	http.Handle("/", loggedEndpoints)
 
-	//start server
-	log.Fatal(http.ListenAndServe(conf.Server.Address, nil))
+	stop := *term.Channel()
+	server := http.Server{}
+
+	// safely start server
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		server.Serve(sl)
+	}()
+
+	fmt.Printf("Serving HTTP\n")
+	select {
+	case signal := <-stop:
+		fmt.Printf("Got signal:%v\n", signal)
+	}
+	fmt.Printf("Stopping listener\n")
+	sl.Stop()
+	fmt.Printf("Waiting on server\n")
+	wg.Wait()
+
 }
 
 // Log wrapper function for the http server
