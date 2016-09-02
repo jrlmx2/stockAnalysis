@@ -15,6 +15,13 @@ type Config struct {
 	Database Database
 	Server   Server
 	Stocks   Stocks
+	Dump     Dump
+}
+
+type Dump struct {
+	Interval    string
+	CommandFile string
+	Out         string
 }
 
 // LogConfig Describes the options used to setup the logger

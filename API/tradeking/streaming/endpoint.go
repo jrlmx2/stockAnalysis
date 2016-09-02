@@ -3,10 +3,10 @@ package streaming
 import (
 	"bufio"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/jrlmx2/stockAnalysis/utils/oauth"
+	"github.com/jrlmx2/stockAnalysis/utils/server"
 )
 
 const (
@@ -25,7 +25,7 @@ func OpenStream(r []string) error {
 		return err
 	}
 	fmt.Printf("\n%+v\n", req)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := server.Client.Do(req)
 	if err != nil {
 		return err
 	}

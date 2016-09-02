@@ -3,33 +3,29 @@ package model
 type Stock struct {
 	Trades []*Trade
 	Symbol *Symbol
-	Quotes []*Quote
+	Quotes *Quote
 }
 
 func NewStockWithSymbol(symbol *Symbol) (*Stock, error) {
-	trades, err := symbol.LoadTrades()
-	if err != nil {
-		return nil, err
-	}
-
-	return &Stock{Trades: trades, Symbol: symbol, Quotes: make([]*Quote, 0)}, nil
+	return newStock(symbol)
 }
 
 func NewStock(s string) (*Stock, error) {
 	symbol := NewSymbol(s)
+	return newStock(symbol)
+}
 
+func newStock(symbol *Symbol) (*Stock, error) {
 	trades, err := symbol.LoadTrades()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Stock{Trades: trades, Symbol: symbol, Quotes: make([]*Quote, 0)}, nil
+	quote := symbol.LoadQuote()
+
+	return &Stock{Trades: trades, Symbol: symbol, Quotes: quote}, nil
 }
 
 func (s *Stock) AddTrade(t *Trade) {
 	s.Trades = append(s.Trades, t)
-}
-
-func (s *Stock) AddQuote(q *Quote) {
-	s.Quotes = append(s.Quotes, q)
 }

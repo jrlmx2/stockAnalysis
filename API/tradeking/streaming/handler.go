@@ -14,19 +14,17 @@ import (
 func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	out := make(chan model.Unmarshalable, 0)
 
-	die := term.NewTerm() //watch for sigterm, kill and others die will be 1 when terminated
-
 	d, _ := time.ParseDuration("1s")
 	go func() {
 		for {
-			if *die == 1 {
+			if term.WasTerminated() {
 				log.Info("Stream monitor was terminated.")
 				return
 			}
 			select {
 			case stream, ok := <-handler:
 				if ok {
-					go streamListener(stream, &out, die, log)
+					go streamListener(stream, &out, log)
 					fmt.Println("Found new stream")
 				} else {
 					log.Warning("Channel closed!")
@@ -41,10 +39,10 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	return out
 }
 
-func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, die *int, log *logging.Logger) {
+func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, log *logging.Logger) {
 	content := ""
 	for {
-		if *die == 1 {
+		if term.WasTerminated() {
 			log.Info("Stream parser was terminated.")
 			return
 		}

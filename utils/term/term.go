@@ -6,19 +6,41 @@ import (
 	"syscall"
 )
 
-// NewTerm Spawns a process to signal any program interupts should shut down.
-func NewTerm() *int {
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
+var sigc chan os.Signal
 
-	temp := 0
-	die := &temp
-	go func() {
-		<-sigc
-		temp = 1
-	}()
-	return die
+var die int
+
+// NewTerm Spawns a process to signal any program interupts should shut down.
+func NewTerm() {
+	if sigc == nil {
+		sigc = make(chan os.Signal, 1)
+		signal.Notify(sigc,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+			syscall.SIGQUIT)
+
+		go func() {
+			<-sigc
+			die = 1
+		}()
+	}
+}
+
+func Channel() *chan os.Signal {
+	return &sigc
+}
+
+func Kill() {
+	die = 1
+}
+
+func WasTerminated() bool {
+	if sigc == nil {
+		NewTerm()
+	}
+	if die == 1 {
+		return true
+	} else {
+		return false
+	}
 }

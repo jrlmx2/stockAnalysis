@@ -15,10 +15,8 @@ import (
 // EstablishEndpoints is used for appending tradeking public API calls to the Server
 func EstablishEndpoints(handler *mux.Router) *mux.Router {
 	conf := config.ReadConfigPath("API/tradeking/api.conf")
-	fmt.Printf("\n\n%+v\n\n", conf)
 
 	logger, _ := logger.NewLogger(conf.Logger)
-	fmt.Printf("%+v", logger)
 
 	oauthWrapper.SetCredentials(conf.API["tradeking"].OAuthToken, conf.API["tradeking"].OAuthSecret)
 	oauthWrapper.SetClient(conf.API["tradeking"].Key, conf.API["tradeking"].Secret)
