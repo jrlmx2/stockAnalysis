@@ -71,7 +71,6 @@ func (q *Quote) Save() error {
 	}
 
 	insData, updateData := q.Data()
-	fmt.Printf("\n%s\n", fmt.Sprintf(qinsert, insData, updateData))
 	_, id, err := q.repository.Exec(fmt.Sprintf(qinsert, insData, updateData))
 	if err != nil {
 		return NewModelError(Query, err)

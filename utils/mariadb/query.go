@@ -1,9 +1,6 @@
 package mariadb
 
-import (
-	"database/sql"
-	"fmt"
-)
+import "database/sql"
 
 const (
 	query  = "SELECT %s FROM %s%s"
@@ -25,7 +22,6 @@ func (p *Pool) QueryRow(query string) *sql.Row {
 
 func (p *Pool) Exec(query string) (*sql.Result, int64, error) {
 	result, err := p.db.Exec(query)
-	fmt.Printf("%s\n", err)
 	if err != nil {
 		return nil, 0, err
 	}

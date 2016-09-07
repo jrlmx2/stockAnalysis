@@ -1,7 +1,6 @@
 package streaming
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
 	"time"
@@ -18,6 +17,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	go func() {
 		for {
 			if term.WasTerminated() {
+				log.Warning("Thread was terminated")
 				log.Info("Stream monitor was terminated.")
 				return
 			}
@@ -27,6 +27,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 					go streamListener(stream, &out, log)
 					fmt.Println("Found new stream")
 				} else {
+					fmt.Printf("\n\nChannel was closed @ %+v\n\n", time.Now().UTC().String())
 					log.Warning("Channel closed!")
 				}
 			default:
@@ -39,7 +40,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	return out
 }
 
-func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, log *logging.Logger) {
+func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log *logging.Logger) {
 	content := ""
 	for {
 		if term.WasTerminated() {
@@ -47,9 +48,12 @@ func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, log *lo
 			return
 		}
 
-		line, err := reader.ReadString('>')
+		line, err := reader.S.ReadString('>')
 		if err != nil {
+			fmt.Printf("Error reading from stream: %s\n\n", err)
 			log.Errorf("Error reading from stream: %s", err)
+			//connection was closed, try again then kill this thread
+			OpenStream(reader.Req)
 			return
 		}
 
@@ -76,15 +80,16 @@ func streamListener(reader *bufio.Reader, out *chan model.Unmarshalable, log *lo
 }
 
 func unmarshal(in string) (model.Unmarshalable, error) {
-	fmt.Printf("\nGot in: %s\n\n", in)
 	if strings.Contains(in, "quote") {
 		q, _ := model.NewQuoteU().Unmarshal(in)
+		fmt.Printf("\n Got Quote: %+v", q)
 		err := q.Save()
 		return q, err
 	}
 
 	if strings.Contains(in, "trade") {
 		trade, _ := model.NewTradeU().Unmarshal(in)
+		fmt.Printf("\n Got Trade: %+v", trade)
 		err := trade.Save()
 		return trade, err
 	}

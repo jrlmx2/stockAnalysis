@@ -68,7 +68,6 @@ func (t *Trade) Delete() error {
 }
 
 func (t *Trade) Save() error {
-	fmt.Printf("%+v", t)
 	if len(t.Symbol) < 1 {
 		return NewModelError(NoSymbol)
 	}
