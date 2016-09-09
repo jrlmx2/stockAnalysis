@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/hydrogen18/stoppableListener"
@@ -70,7 +71,10 @@ func main() {
 	http.Handle("/", loggedEndpoints)
 
 	stop := *term.Channel()
-	server := http.Server{}
+	server := &http.Server{
+		ReadTimeout:  8 * time.Hour,
+		WriteTimeout: 10 * time.Second,
+	}
 
 	// safely start server
 	var wg sync.WaitGroup

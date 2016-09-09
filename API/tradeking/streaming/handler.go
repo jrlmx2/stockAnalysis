@@ -10,11 +10,6 @@ import (
 	"github.com/op/go-logging"
 )
 
-const (
-	open  = 7
-	close = 17
-)
-
 func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	out := make(chan model.Unmarshalable, 0)
 
@@ -58,7 +53,7 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 			fmt.Printf("Error reading from stream: %s\n\n", err)
 			log.Errorf("Error reading from stream: %s", err)
 			//connection was closed, try again then kill this thread
-			reinitiateStream(reader)
+			OpenStream(reader.Req)
 			return
 		}
 
@@ -82,24 +77,6 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 			content += sline
 		}
 	}
-}
-
-func reinitiateStream(stream *TradeKingStream) {
-	easternUnitedStates, _ := time.LoadLocation("America/New_York")
-	now := time.Now().In(easternUnitedStates)
-	if now.Hour() == 17 || (now.Hour() == 16 && now.Minute() > 50) { // market closes
-		var wait time.Duration
-		if now.Weekday().String() == "Friday" { //if its friday, wait the weekend otherwise, wait overnight
-			wait, _ = time.ParseDuration((string)(48+close-open) + "h")
-		} else {
-			wait, _ = time.ParseDuration((string)(close-open) + "h")
-		}
-		fmt.Println("Stream waiting for " + wait.String())
-		time.Sleep(wait)
-	}
-
-	fmt.Println("Opening new stream.")
-	OpenStream(stream.Req)
 }
 
 func unmarshal(in string) (model.Unmarshalable, error) {
