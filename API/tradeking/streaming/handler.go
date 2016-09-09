@@ -94,9 +94,11 @@ func reinitiateStream(stream *TradeKingStream) {
 		} else {
 			wait, _ = time.ParseDuration((string)(close-open) + "h")
 		}
+		fmt.Println("Stream waiting for " + wait.String())
 		time.Sleep(wait)
 	}
 
+	fmt.Println("Opening new stream.")
 	OpenStream(stream.Req)
 }
 
