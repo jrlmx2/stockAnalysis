@@ -10,6 +10,11 @@ import (
 	"github.com/op/go-logging"
 )
 
+const (
+	open  = 7
+	close = 17
+)
+
 func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	out := make(chan model.Unmarshalable, 0)
 
@@ -53,7 +58,7 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 			fmt.Printf("Error reading from stream: %s\n\n", err)
 			log.Errorf("Error reading from stream: %s", err)
 			//connection was closed, try again then kill this thread
-			OpenStream(reader.Req)
+			reinitiateStream(reader)
 			return
 		}
 
@@ -79,18 +84,34 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 	}
 }
 
+func reinitiateStream(stream *TradeKingStream) {
+	easternUnitedStates, _ := time.LoadLocation("America/New_York")
+	now := time.Now().In(easternUnitedStates)
+	if now.Hour() == 17 || (now.Hour() == 16 && now.Minute() > 50) { // market closes
+		var wait time.Duration
+		if now.Weekday().String() == "Friday" { //if its friday, wait the weekend otherwise, wait overnight
+			wait, _ = time.ParseDuration((string)(48+close-open) + "h")
+		} else {
+			wait, _ = time.ParseDuration((string)(close-open) + "h")
+		}
+		time.Sleep(wait)
+	}
+
+	OpenStream(stream.Req)
+}
+
 func unmarshal(in string) (model.Unmarshalable, error) {
 	if strings.Contains(in, "quote") {
 		q, _ := model.NewQuoteU().Unmarshal(in)
-		fmt.Printf("\n Got Quote: %+v", q)
 		err := q.Save()
+		fmt.Printf("\n Got Quote: %+v", q)
 		return q, err
 	}
 
 	if strings.Contains(in, "trade") {
 		trade, _ := model.NewTradeU().Unmarshal(in)
-		fmt.Printf("\n Got Trade: %+v", trade)
 		err := trade.Save()
+		fmt.Printf("\n Got Trade: %+v", trade)
 		return trade, err
 	}
 
