@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"fmt"
+	"time"
 
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
@@ -11,7 +12,7 @@ import (
 const (
 	tfindOne    = "select * from trades where id='%d' order by timestamp asc"
 	tfindTrades = "select * from trades where symbol_id in ('%s') order by timestamp asc"
-	tfindTrade  = "select * from trades where symbol_id = '%d' order by timestamp asc"
+	tfindTrade  = "select id, symbol_id, last, timestamp, tradedvolume, vwa, created_at from trades where symbol_id = '%d' order by timestamp asc"
 	tinsert     = "insert into trades values %s"
 	tdelete     = "delete from trades where id=%d"
 )
@@ -25,7 +26,7 @@ func ScanNewTrades(s string, rows *sql.Rows) ([]*Trade, error) {
 	trades := make([]*Trade, 0)
 	for rows.Next() {
 		t := NewTrade(s)
-		err := rows.Scan(&t.ID, &t.Last, &t.Timestamp, &t.TradedVolume, &t.VolumeWeightedAverage)
+		err := rows.Scan(&t.ID, &t.SymbolID, &t.Last, &t.Timestamp, &t.TradedVolume, &t.VolumeWeightedAverage, &t.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -44,6 +45,7 @@ type Trade struct {
 	Timestamp             int     `xml:"timestamp"`
 	TradedVolume          int64   `xml:"vl"`
 	VolumeWeightedAverage float32 `xml:"vwap"`
+	CreatedAt             time.Time
 	repository            *mariadb.Pool
 }
 
