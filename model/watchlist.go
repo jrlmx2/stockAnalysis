@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
@@ -26,11 +25,11 @@ const (
 	wfindsymbols   = "select symbol_id, symbol from watchlist_symbols ws left join symbols s on s.id = ws.symbol_id where watchlist_id = '%d'"
 )
 
-func NewEmptyWatchlist() *Watchlist {
-	return &Watchlist{repository: repository}
+func NewEmptyWatchlist() *WatchList {
+	return &WatchList{repository: repository}
 }
 
-func MonitorWatchlists() error {
+/*func MonitorWatchlists() error {
 	rows, err := repository.Query(fmt.Sprintf(wfindsymbols, w.ID))
 	if err != nil {
 		return NewModelError(Query, err)
@@ -43,15 +42,15 @@ func MonitorWatchlists() error {
 		w.GetSymbols()
 		w.OpenStream()
 	}
-}
+}*/
 
-func (w *WatchList) OpenStream() {
+/*func (w *WatchList) OpenStream() {
 	query := make([]string, 0)
 	for _, symbol := range w.Symbols {
 		query = append(query, symbol.Symbol)
 	}
 	streaming.OpenStream(query, ",")
-}
+}*/
 
 func (w *WatchList) SymbolData() string {
 	inserts := make([]string, 0)

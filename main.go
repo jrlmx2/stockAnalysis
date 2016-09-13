@@ -48,7 +48,7 @@ func main() {
 	//thread with a daily backup for the database
 	go db.BackupDB(conf.Dump, conf.Database)
 
-	go model.MonitorWatchlists()
+	//go model.MonitorWatchlists()
 
 	// Setup Server
 	listener, err := net.Listen("tcp", conf.Server.Address)
