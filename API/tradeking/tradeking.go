@@ -31,8 +31,6 @@ func EstablishEndpoints(handler *mux.Router) *mux.Router {
 }
 
 func StreamOpener(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-
 	symbols := fmt.Sprintf("symbols=%s", r.Form["symbols"])
 
 	streaming.OpenStream([]string{symbols})

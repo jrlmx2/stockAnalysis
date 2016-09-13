@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 )
 
@@ -17,12 +18,40 @@ type WatchList struct {
 }
 
 const (
-	winsert        = "insert into watchlist values %s"
+	wselectall     = "select id, name from watchlist"
+	winsert        = "insert into watchlist values (NULL,'%s',NULL)"
 	wdeletesymbols = "delete from watchlist_symbols where symbol_id=%d"
 	winsertsymbols = "insert into watchlist_symbols values %s"
-	wfind          = "select * from watchlist where name='%s'"
-	wfindsymbols   = "select s.symbol_id, s.symbol from watchlist_symbols ws join symbols s on s.id = ws.symbol_id where watchlist_id = '%d'"
+	wfind          = "select id, name from watchlist where `name`='%s'"
+	wfindsymbols   = "select symbol_id, symbol from watchlist_symbols ws left join symbols s on s.id = ws.symbol_id where watchlist_id = '%d'"
 )
+
+func NewEmptyWatchlist() *Watchlist {
+	return &Watchlist{repository: repository}
+}
+
+func MonitorWatchlists() error {
+	rows, err := repository.Query(fmt.Sprintf(wfindsymbols, w.ID))
+	if err != nil {
+		return NewModelError(Query, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		w := NewEmptyWatchlist()
+		rows.Scan(&w.ID, &w.Name)
+		w.GetSymbols()
+		w.OpenStream()
+	}
+}
+
+func (w *WatchList) OpenStream() {
+	query := make([]string, 0)
+	for _, symbol := range w.Symbols {
+		query = append(query, symbol.Symbol)
+	}
+	streaming.OpenStream(query, ",")
+}
 
 func (w *WatchList) SymbolData() string {
 	inserts := make([]string, 0)
@@ -70,19 +99,19 @@ func (w *WatchList) GetSymbols() error {
 
 func NewWatchList(name string) (*WatchList, error) {
 	list := &WatchList{Name: name, repository: repository}
-	list.Save()
 	return list, list.Save()
 }
 
-func (w *WatchList) LoadList(list string) error {
+func LoadList(list string) (*WatchList, error) {
+	l := &WatchList{Name: list, repository: repository}
 	if list == "" {
-		return NewModelError(NoName)
+		return nil, NewModelError(NoName)
 	}
 
-	w.repository.QueryRow(fmt.Sprint(wfind, list)).Scan(&w.ID, &w.Name)
+	row := l.repository.QueryRow(fmt.Sprintf(wfind, list))
+	row.Scan(&l.ID, &l.Name)
 
-	w.GetSymbols()
-	return nil
+	return l, l.GetSymbols()
 }
 
 func (w *WatchList) Load() error {
@@ -90,9 +119,9 @@ func (w *WatchList) Load() error {
 		return NewModelError(NoName)
 	}
 
-	w.repository.QueryRow(fmt.Sprint(wfind, w.Name)).Scan(&w.ID, &w.Name)
+	row := w.repository.QueryRow(fmt.Sprintf(wfind, w.Name))
+	row.Scan(&w.ID, &w.Name)
 
-	w.GetSymbols()
 	return nil
 }
 
@@ -164,12 +193,14 @@ func (w *WatchList) Save() error {
 			return NewModelError(Load, "Watchlist", err)
 		}
 
-		_, id, err := w.repository.Exec(fmt.Sprintf(winsert, w.Name))
-		if err != nil {
-			return NewModelError(Query, err)
-		}
+		if w.ID == 0 {
+			_, id, err := w.repository.Exec(fmt.Sprintf(winsert, w.Name))
+			if err != nil {
+				return NewModelError(Query, err)
+			}
 
-		w.ID = id
+			w.ID = id
+		}
 	}
 
 	if w.Symbols != nil {

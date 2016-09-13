@@ -48,6 +48,8 @@ func main() {
 	//thread with a daily backup for the database
 	go db.BackupDB(conf.Dump, conf.Database)
 
+	go model.MonitorWatchlists()
+
 	// Setup Server
 	listener, err := net.Listen("tcp", conf.Server.Address)
 	if err != nil {
@@ -100,6 +102,7 @@ func main() {
 func Log(handler *mux.Router, log *logging.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Infof("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		r.ParseForm()
 		handler.ServeHTTP(w, r)
 	})
 }
