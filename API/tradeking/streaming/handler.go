@@ -48,7 +48,7 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 			return
 		}
 
-		if reader.S.Peek(1) == 'EOF' {
+		if reader.S.Peek(1)[0] == 'EOF' {
 			fmt.Println("Found EOF, restarting stream")
 			OpenStream(reader.Req)
 			return
