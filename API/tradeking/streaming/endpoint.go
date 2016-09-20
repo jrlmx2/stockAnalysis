@@ -29,6 +29,7 @@ func makeQuery(r []string) string {
 func OpenStream(r []string) error {
 	req, err := oauthWrapper.Stream(uri+makeQuery(r), "GET")
 	if err != nil {
+		fmt.Printf("Openstream failed, trying again. %s", OpenStream(r))
 		return err
 	}
 

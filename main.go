@@ -74,7 +74,7 @@ func main() {
 
 	stop := *term.Channel()
 	server := &http.Server{
-		ReadTimeout:  8 * time.Hour,
+		ReadTimeout:  1 * time.Minute,
 		WriteTimeout: 10 * time.Second,
 	}
 

@@ -42,9 +42,9 @@ func NewEmptyWatchlist() *WatchList {
 		w.GetSymbols()
 		w.OpenStream()
 	}
-}*/
+}
 
-/*func (w *WatchList) OpenStream() {
+func (w *WatchList) OpenStream() {
 	query := make([]string, 0)
 	for _, symbol := range w.Symbols {
 		query = append(query, symbol.Symbol)

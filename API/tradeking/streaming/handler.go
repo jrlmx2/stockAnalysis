@@ -53,7 +53,7 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 			fmt.Printf("Error reading from stream: %s\n\n", err)
 			log.Errorf("Error reading from stream: %s", err)
 			//connection was closed, try again then kill this thread
-			OpenStream(reader.Req)
+			fmt.Printf("\n\nOpened Stream with %s.\n\n", OpenStream(reader.Req))
 			return
 		}
 
