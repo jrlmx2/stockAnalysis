@@ -24,7 +24,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 			select {
 			case stream, ok := <-handler:
 				if ok {
-					go streamListener(stream, &out, log)
+					go streamListener(stream, out, log)
 					fmt.Println("Found new stream")
 				} else {
 					fmt.Printf("\n\nChannel was closed @ %+v\n\n", time.Now().UTC().String())
@@ -40,7 +40,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	return out
 }
 
-func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log *logging.Logger) {
+func streamListener(reader *TradeKingStream, out chan model.Unmarshalable, log *logging.Logger) {
 	content := ""
 	for {
 		if term.WasTerminated() {
@@ -67,11 +67,11 @@ func streamListener(reader *TradeKingStream, out *chan model.Unmarshalable, log 
 		if strings.Contains(sline, "/") && (strings.Contains(sline, "quote") || strings.Contains(sline, "trade")) {
 			content += sline
 
-			_, err := unmarshal(strings.Trim(strings.Trim(content, "\n"), " "))
+			parsedContent, err := unmarshal(strings.Trim(strings.Trim(content, "\n"), " "))
 			if err != nil {
 				log.Warningf("Unmarshalling string %s failed with %s", content, err)
 			}
-			//*out <- parsedContent
+			out <- parsedContent
 			content = ""
 		} else {
 			content += sline
