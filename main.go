@@ -72,7 +72,7 @@ func main() {
 
 	http.Handle("/", loggedEndpoints)
 
-	stop := *term.Channel()
+	stop := term.Channel()
 	server := &http.Server{
 		ReadTimeout:  1 * time.Minute,
 		WriteTimeout: 10 * time.Second,
