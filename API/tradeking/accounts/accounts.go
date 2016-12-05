@@ -1,4 +1,44 @@
-package account
+package accounts
+
+import (
+	"bufio"
+	"encoding/xml"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/jrlmx2/stockAnalysis/utils/oauth"
+)
+
+var accts *Accounts
+
+func PullAccounts() {
+	req, err := oauthWrapper.Request(URI, "GET")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("\n%+v\n", req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	bytes, _ := bufio.NewReader(resp.Body).ReadBytes()
+	err = xml.Unmarshal(bytes, accts)
+	if err != nil {
+		panic(err)
+	}
+
+	PrintAccounts()
+}
+
+func PrintAccounts() {
+	fmt.Println("Found accounts: ");
+	for _, acct := range accts {
+		fmt.Printf("%f: %f\n",accts.Summary.ID, accounts.Summary.Balance.Value)
+	}
+}
 
 type Accounts struct {
 	Accounts []*Account `xml:"accounts"`

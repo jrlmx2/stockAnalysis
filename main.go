@@ -63,6 +63,8 @@ func main() {
 		panic(err)
 	}
 
+	streamHandler := make(chan Stream)
+
 	//establish endpoints
 	endpoints := mux.NewRouter()
 	endpoints = tradeking.EstablishEndpoints(endpoints)

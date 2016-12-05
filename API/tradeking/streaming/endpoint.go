@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	uri = "market/quotes"
+	uri = "/market/quotes"
 )
 
 type TradeKingStream struct {
@@ -26,20 +26,19 @@ func makeQuery(r []string) string {
 	return "?" + strings.Join(r, "&")
 }
 
-func OpenStream(r []string) error {
+func OpenStream(r []string) (*TradeKingStream, error) {
 	req, err := oauthWrapper.Stream(uri+makeQuery(r), "GET")
 	if err != nil {
 		fmt.Printf("Openstream failed, trying again. %s", OpenStream(r))
-		return err
+		return nil, err
 	}
 
 	fmt.Printf("\n%+v\n", req)
 	resp, err := server.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Printf("\n%+v\n", resp)
-	handler <- &TradeKingStream{S: bufio.NewReader(resp.Body), Resp: resp, Req: r}
-	return nil
+	return &TradeKingStream{S: bufio.NewReader(resp.Body), Resp: resp, Req: r},nil
 }

@@ -4,7 +4,7 @@ import "net/http"
 
 const (
 	base   = "https://api.tradeking.com/v1"
-	stream = "https://stream.tradeking.com/v1/"
+	stream = "https://stream.tradeking.com/v1"
 )
 
 // This example shows how to sign a request when the URL Opaque field is used.

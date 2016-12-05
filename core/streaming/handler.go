@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jrlmx2/stockAnalysis/API/tradeking"
 	"github.com/jrlmx2/stockAnalysis/model"
 	"github.com/jrlmx2/stockAnalysis/utils/term"
 	"github.com/op/go-logging"
