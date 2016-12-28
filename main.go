@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -12,8 +15,11 @@ import (
 	logging "github.com/op/go-logging"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking"
+	"github.com/jrlmx2/stockAnalysis/core/socket"
+	"github.com/jrlmx2/stockAnalysis/core/stream"
 	"github.com/jrlmx2/stockAnalysis/model"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
+	"github.com/jrlmx2/stockAnalysis/utils/influxdb"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
 	"github.com/jrlmx2/stockAnalysis/utils/term"
@@ -36,10 +42,17 @@ func main() {
 	//connect database
 	db, err := mariadb.NewPool(conf.Database)
 	if err != nil {
-		log.Criticalf("Error opening database at host %s", conf.Database.Host)
-		panic(fmt.Sprintf("Error opening database at host %s", conf.Database.Host))
+		log.Criticalf("Error opening mariadb at host %s", conf.Database.Host)
+		panic(fmt.Sprintf("Error opening mariadb at host %s", conf.Database.Host))
 	}
 	defer db.Close()
+
+	c, err := influxdb.Setup(conf.InfluxDatabase)
+	if err != nil {
+		log.Criticalf("Error opening influx at host %s", conf.InfluxDatabase.Host)
+		panic(fmt.Sprintf("Error opening influx at host %s", conf.InfluxDatabase.Host))
+	}
+	defer c.Close()
 
 	model.SetRepository(db)
 
@@ -63,18 +76,18 @@ func main() {
 		panic(err)
 	}
 
-	streamHandler := make(chan Stream)
+	streamHandler := make(chan interface{})
+	socket.UpdateSubscribers(log, stream.ProcessStreams(log, streamHandler))
 
 	//establish endpoints
 	endpoints := mux.NewRouter()
-	endpoints = tradeking.EstablishEndpoints(endpoints)
+	endpoints = tradeking.EstablishEndpoints(endpoints, streamHandler)
 
 	//wrap endpoints
 	loggedEndpoints := Log(endpoints, log)
 
 	http.Handle("/", loggedEndpoints)
 
-	stop := term.Channel()
 	server := &http.Server{
 		ReadTimeout:  1 * time.Minute,
 		WriteTimeout: 10 * time.Second,
@@ -88,9 +101,14 @@ func main() {
 		server.Serve(sl)
 	}()
 
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
 	fmt.Printf("Serving HTTP\n")
 	select {
-	case signal := <-stop:
+	case signal := <-sigc:
 		fmt.Printf("Got signal:%v\n", signal)
 	}
 	fmt.Printf("Stopping listener\n")

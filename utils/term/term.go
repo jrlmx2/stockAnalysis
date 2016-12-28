@@ -26,10 +26,6 @@ func NewTerm() {
 	}
 }
 
-func Channel() *chan os.Signal {
-	return &sigc
-}
-
 func Kill() {
 	die = 1
 }

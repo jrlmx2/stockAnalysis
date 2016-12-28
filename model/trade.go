@@ -1,27 +1,27 @@
 package model
 
 import (
-	"database/sql"
 	"encoding/xml"
-	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
+	"github.com/jrlmx2/stockAnalysis/utils/influxdb"
 )
 
 const (
-	tfindOne    = "select * from trades where id='%d' order by timestamp asc"
-	tfindTrades = "select * from trades where symbol_id in ('%s') order by timestamp asc"
-	tfindTrade  = "select id, symbol_id, last, timestamp, tradedvolume, vwa, created_at from trades where symbol_id = '%d' order by timestamp asc"
-	tinsert     = "insert into trades values %s"
-	tdelete     = "delete from trades where id=%d"
+	tfindOne     = "select * from trades where id='%d' order by timestamp asc"
+	tfindTrades  = "select * from trades where symbol_id in ('%s') order by timestamp asc"
+	tfindTrade   = "select id, symbol_id, last, timestamp, tradedvolume, vwa, created_at from trades where symbol_id = '%d' order by timestamp asc"
+	tinsert      = "insert into trades values %s"
+	tdelete      = "delete from trades where id=%d"
+	influxInsert = "%s,last=%f volume=%d,vwa=%f"
 )
 
-func NewTrade(s string) *Trade { return &Trade{repository: repository, Symbol: s} }
+func NewTrade(s string) *Trade { return &Trade{Symbol: s} }
 
-func NewTradeU() *Trade { return &Trade{repository: repository} }
+func NewTradeU() *Trade { return &Trade{} }
 
-func ScanNewTrades(s string, rows *sql.Rows) ([]*Trade, error) {
+/*func ScanNewTrades(s string, rows *sql.Rows) ([]*Trade, error) {
 	defer rows.Close()
 	trades := make([]*Trade, 0)
 	for rows.Next() {
@@ -34,30 +34,41 @@ func ScanNewTrades(s string, rows *sql.Rows) ([]*Trade, error) {
 	}
 
 	return trades, nil
-}
+}*/
 
 type Trade struct {
 	Trade                 xml.Name `xml:"trade"`
 	ID                    int64
 	SymbolID              int64
-	Last                  float32 `xml:"last"`
+	Last                  float64 `xml:"last"`
 	Symbol                string  `xml:"symbol"`
 	Timestamp             int     `xml:"timestamp"`
 	TradedVolume          int64   `xml:"vl"`
-	VolumeWeightedAverage float32 `xml:"vwap"`
+	VolumeWeightedAverage float64 `xml:"vwap"`
 	CreatedAt             time.Time
-	repository            *mariadb.Pool
 }
 
 func (t *Trade) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return t, xml.Unmarshal([]byte(xmlIn), t)
 }
 
-func (td *Trade) Data() string {
-	return fmt.Sprintf("(NULL,%f,%d,%d,%d,%f,NULL)", td.Last, td.SymbolID, td.Timestamp, td.TradedVolume, td.VolumeWeightedAverage)
+func (td *Trade) Tags() map[string]string {
+	tags := make(map[string]string)
+
+	tags["symbol"] = td.Symbol
+	tags["last"] = strconv.FormatFloat(td.Last, 'f', -1, 64)
+	tags["volume"] = strconv.FormatInt(td.TradedVolume, 10)
+
+	return tags
 }
 
-func (t *Trade) Delete() error {
+func (td *Trade) Labels() map[string]interface{} {
+	return map[string]interface{}{
+		"vwa": td.VolumeWeightedAverage,
+	}
+}
+
+/*func (t *Trade) Delete() error {
 	if t.ID == 0 {
 		return NewModelError(NoTradeID)
 	}
@@ -67,9 +78,10 @@ func (t *Trade) Delete() error {
 		return NewModelError(Query)
 	}
 	return nil
-}
+}*/
 
 func (t *Trade) Save() error {
+
 	if len(t.Symbol) < 1 {
 		return NewModelError(NoSymbol)
 	}
@@ -83,13 +95,9 @@ func (t *Trade) Save() error {
 		t.SymbolID = Symbol.ID
 	}
 
-	_, id, err := t.repository.Exec(fmt.Sprintf(tinsert, t.Data()))
-	if err != nil {
-		fmt.Printf("No Query Err %+v", t)
-		return NewModelError(Query, err)
-	}
-
-	t.ID = id
-
-	return nil
+	return influxdb.AddPoint(t.Symbol, t.Tags(), t.Labels())
 }
+
+/*func (td *Trade) Data() string {
+	return fmt.Sprintf("(NULL,%f,%d,%d,%d,%f,NULL)", td.Last, td.SymbolID, td.Timestamp, td.TradedVolume, td.VolumeWeightedAverage)
+}*/

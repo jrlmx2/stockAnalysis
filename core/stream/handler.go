@@ -1,18 +1,17 @@
-package streaming
+package stream
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/jrlmx2/stockAnalysis/API/tradeking"
 	"github.com/jrlmx2/stockAnalysis/model"
 	"github.com/jrlmx2/stockAnalysis/utils/term"
 	"github.com/op/go-logging"
 )
 
-func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
-	out := make(chan model.Unmarshalable, 0)
+func ProcessStreams(log *logging.Logger, in chan interface{}) chan model.Unmarshalable {
+	out := make(chan model.Unmarshalable, 10000)
 
 	d, _ := time.ParseDuration("1s")
 	go func() {
@@ -23,9 +22,9 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 				return
 			}
 			select {
-			case stream, ok := <-handler:
+			case stream, ok := <-in:
 				if ok {
-					go streamListener(stream, out, log)
+					go streamListener(stream.(Stream), out, log)
 					fmt.Println("Found new stream")
 				} else {
 					fmt.Printf("\n\nChannel was closed @ %+v\n\n", time.Now().UTC().String())
@@ -41,7 +40,7 @@ func ProcessStreams(log *logging.Logger) <-chan model.Unmarshalable {
 	return out
 }
 
-func streamListener(reader *TradeKingStream, out chan model.Unmarshalable, log *logging.Logger) {
+func streamListener(reader Stream, out chan model.Unmarshalable, log *logging.Logger) {
 	content := ""
 	for {
 		if term.WasTerminated() {
@@ -49,12 +48,13 @@ func streamListener(reader *TradeKingStream, out chan model.Unmarshalable, log *
 			return
 		}
 
-		line, err := reader.S.ReadString('>')
+		line, err := reader.Connection().ReadString('>')
 		if err != nil {
 			fmt.Printf("Error reading from stream: %s\n\n", err)
 			log.Errorf("Error reading from stream: %s", err)
 			//connection was closed, try again then kill this thread
-			fmt.Printf("\n\nOpened Stream with %s.\n\n", OpenStream(reader.Req))
+			reader.Reopen()
+			fmt.Printf("\n\nOpened Stream.\n\n")
 			return
 		}
 

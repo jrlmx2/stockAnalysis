@@ -114,7 +114,8 @@ func (s *Symbol) LoadTrades() ([]*Trade, error) {
 	}
 	defer rows.Close()
 
-	return ScanNewTrades(s.Symbol, rows)
+	//return ScanNewTrades(s.Symbol, rows)
+	return nil, nil
 }
 
 func (s *Symbol) parseRow(row *sql.Row) error {

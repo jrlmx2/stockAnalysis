@@ -10,12 +10,14 @@ import (
 
 // Config type wraps all the potential fields a configuration file might have
 type Config struct {
-	API      map[string]API
-	Logger   LogConfig
-	Database Database
-	Server   Server
-	Stocks   Stocks
-	Dump     Dump
+	API            map[string]API
+	Logger         LogConfig
+	Database       Database
+	InfluxDatabase Database
+	Server         Server
+	Stocks         Stocks
+	Dump           Dump
+	InfluxDump     Dump
 }
 
 type Dump struct {

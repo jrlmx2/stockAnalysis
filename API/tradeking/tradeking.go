@@ -8,23 +8,19 @@ import (
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking/streaming"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
-	"github.com/jrlmx2/stockAnalysis/utils/logger"
 	"github.com/jrlmx2/stockAnalysis/utils/oauth"
 )
 
 // EstablishEndpoints is used for appending tradeking public API calls to the Server
-func EstablishEndpoints(handler *mux.Router) *mux.Router {
+func EstablishEndpoints(handler *mux.Router, streams chan interface{}) *mux.Router {
 	conf := config.ReadConfigPath("API/tradeking/api.conf")
 
-	logger, _ := logger.NewLogger(conf.Logger)
+	//logger, _ := logger.NewLogger(conf.Logger)
 
 	oauthWrapper.SetCredentials(conf.API["tradeking"].OAuthToken, conf.API["tradeking"].OAuthSecret)
 	oauthWrapper.SetClient(conf.API["tradeking"].Key, conf.API["tradeking"].Secret)
 
-	streams := streaming.ProcessStreams(logger)
-	if streams != nil {
-		fmt.Println("streams setup")
-	} // do somethign with streams
+	streaming.StreamInput = streams
 
 	return Endpoints(handler)
 

@@ -16,6 +16,19 @@ Password="L6W66SjbUb8eWCiojSbK"
 Host="localhost:3306"
 Schema="stocks"
 
+[InfluxDatabase]
+User="trades"
+Password="xEoQGTgTl7UEqGESSPaL"
+Host="http://192.168.80.128:8086"
+Schema="markets"
+
+
+[InfluxDump]
+CommandFile="C:\\mariadb\\createDump.cmd"
+Interval="24h"
+Out="C:\\Users\\jrlmx\\Dropbox\\stocks\\backup-stocks_%d.sql"
+
+
 [Dump]
 CommandFile="C:\\mariadb\\createDump.cmd"
 Interval="24h"
