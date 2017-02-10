@@ -2,12 +2,10 @@ package influxdb
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
-	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/jrlmx2/stockAnalysis/utils/config"
+	"github.com/jrlmx2/stockAnalysis/utils/logger"
 )
 
 //Pool is a wrapper for a golang database/sql.DB object
@@ -16,11 +14,13 @@ type Pool struct {
 }
 
 var conn client.Client
-var bpConf client.BatchPointsConfig
+var bpConf map[string]chan client.Point
+var schema string
+var running bool
+var log *logger.Logger
+var bp BatchPoints
 
-var bp client.BatchPoints
-
-func Setup(conf config.Database) (client.Client, error) {
+func Setup(conf config.Database, logConf config.LogConfig) (client.Client, error) {
 	// Make client
 	var err error
 
@@ -31,50 +31,40 @@ func Setup(conf config.Database) (client.Client, error) {
 	})
 
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		log.Fatal("Error: %s", err)
 		return nil, err
 	}
 
-	bpConf = client.BatchPointsConfig{
-		Database:  conf.Schema,
-		Precision: "s",
+	log, err = logger.NewLogger("influx", logConf)
+	if err != nil {
+		return nil, err
 	}
 
-	storeInterval, _ := time.ParseDuration("1s")
-	go storePoints(storeInterval)
+	schema = conf.Schema
+	bp = BatchPoints{}
+	bp.addConfigType("stocks")
 
+	running = true
 	return conn, nil
 }
 
-func storePoints(storeInterval time.Duration) {
-
-	for {
-		var err error
-
-		if bp != nil && len(bp.Points()) > 0 {
-			fmt.Println("storing")
-			conn.Write(bp)
-		}
-
-		bp, err = client.NewBatchPoints(bpConf)
-		if err != nil {
-			log.Fatal("Error during storepoints function at creating new batchpoints", err)
-			return
-		}
-		time.Sleep(storeInterval)
-	}
+func IsRunning() bool {
+	return running
 }
 
-func AddPoint(measurement string, tags map[string]string, fields map[string]interface{}) error {
-	pt, err := client.NewPoint(measurement, tags, fields, time.Now())
-	fmt.Printf("Added new point %+v\n", pt)
-	if err != nil {
-		log.Fatal("Error adding datapoint: ", err)
-		return err
+// queryDB convenience function to query the database
+func QueryDB(cmd string) (res []client.Result, err error) {
+	q := client.Query{
+		Command:  cmd,
+		Database: "markets",
 	}
-
-	bp.AddPoint(pt)
-	//conn.Write(bp)
-	fmt.Println("point Added")
-	return nil
+	if response, err := conn.Query(q); err == nil {
+		if response.Error() != nil {
+			return res, response.Error()
+		}
+		res = response.Results
+	} else {
+		return res, err
+	}
+	return res, nil
 }

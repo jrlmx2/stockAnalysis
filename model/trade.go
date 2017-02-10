@@ -2,19 +2,17 @@ package model
 
 import (
 	"encoding/xml"
-	"strconv"
 	"time"
 
 	"github.com/jrlmx2/stockAnalysis/utils/influxdb"
 )
 
 const (
-	tfindOne     = "select * from trades where id='%d' order by timestamp asc"
-	tfindTrades  = "select * from trades where symbol_id in ('%s') order by timestamp asc"
-	tfindTrade   = "select id, symbol_id, last, timestamp, tradedvolume, vwa, created_at from trades where symbol_id = '%d' order by timestamp asc"
-	tinsert      = "insert into trades values %s"
-	tdelete      = "delete from trades where id=%d"
-	influxInsert = "%s,last=%f volume=%d,vwa=%f"
+	tfindOne    = "select * from trades where id='%d' order by timestamp asc"
+	tfindTrades = "select * from trades where symbol_id in ('%s') order by timestamp asc"
+	tfindTrade  = "select id, symbol_id, last, timestamp, tradedvolume, vwa, created_at from trades where symbol_id = '%d' order by timestamp asc"
+	tinsert     = "insert into trades values %s"
+	tdelete     = "delete from trades where id=%d"
 )
 
 func NewTrade(s string) *Trade { return &Trade{Symbol: s} }
@@ -52,20 +50,19 @@ func (t *Trade) Unmarshal(xmlIn string) (Unmarshalable, error) {
 	return t, xml.Unmarshal([]byte(xmlIn), t)
 }
 
-func (td *Trade) Tags() map[string]string {
-	tags := make(map[string]string)
+func (td *Trade) Labels() map[string]interface{} {
 
-	tags["symbol"] = td.Symbol
-	tags["last"] = strconv.FormatFloat(td.Last, 'f', -1, 64)
-	tags["volume"] = strconv.FormatInt(td.TradedVolume, 10)
+	tags := make(map[string]interface{})
+
+	tags["vwa"] = td.VolumeWeightedAverage
+	tags["last"] = td.Last
+	tags["volume"] = td.TradedVolume
 
 	return tags
 }
 
-func (td *Trade) Labels() map[string]interface{} {
-	return map[string]interface{}{
-		"vwa": td.VolumeWeightedAverage,
-	}
+func (td *Trade) Tags() map[string]string {
+	return map[string]string{}
 }
 
 /*func (t *Trade) Delete() error {
@@ -95,7 +92,7 @@ func (t *Trade) Save() error {
 		t.SymbolID = Symbol.ID
 	}
 
-	return influxdb.AddPoint(t.Symbol, t.Tags(), t.Labels())
+	return influxdb.AddPoint("tradeking_"+t.Symbol, "stocks", t.Tags(), t.Labels())
 }
 
 /*func (td *Trade) Data() string {

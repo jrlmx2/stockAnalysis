@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/hydrogen18/stoppableListener"
-	logging "github.com/op/go-logging"
 
 	"github.com/jrlmx2/stockAnalysis/API/tradeking"
 	"github.com/jrlmx2/stockAnalysis/core/socket"
@@ -22,6 +21,7 @@ import (
 	"github.com/jrlmx2/stockAnalysis/utils/influxdb"
 	"github.com/jrlmx2/stockAnalysis/utils/logger"
 	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
+	"github.com/jrlmx2/stockAnalysis/utils/quandl"
 	"github.com/jrlmx2/stockAnalysis/utils/term"
 )
 
@@ -34,7 +34,7 @@ func main() {
 	}
 
 	//setup logging
-	log, err := logger.NewLogger(conf.Logger)
+	log, err := logger.NewLogger("main", conf.Logger)
 	if err != nil {
 		panic(fmt.Sprintf("Logger failed to open with error:%s \n Configuration Details: %+v\n", err, conf.Logger))
 	}
@@ -42,42 +42,48 @@ func main() {
 	//connect database
 	db, err := mariadb.NewPool(conf.Database)
 	if err != nil {
-		log.Criticalf("Error opening mariadb at host %s", conf.Database.Host)
-		panic(fmt.Sprintf("Error opening mariadb at host %s", conf.Database.Host))
+		log.Critical("Error opening mariadb at host %s", conf.Database.Host)
 	}
 	defer db.Close()
 
-	c, err := influxdb.Setup(conf.InfluxDatabase)
+	c, err := influxdb.Setup(conf.InfluxDatabase, conf.Logger)
 	if err != nil {
-		log.Criticalf("Error opening influx at host %s", conf.InfluxDatabase.Host)
-		panic(fmt.Sprintf("Error opening influx at host %s", conf.InfluxDatabase.Host))
+		log.Critical("Error opening influx at host %s", conf.InfluxDatabase.Host)
 	}
 	defer c.Close()
 
 	model.SetRepository(db)
+	modelLog, _ := logger.NewLogger("model", conf.Logger)
+	model.SetLogger(modelLog)
 
 	log.Info("Database connected")
 
-	//thread with a daily backup for the database
-	go db.BackupDB(conf.Dump, conf.Database)
+	quandlLogger, err := logger.NewLogger("quandl", conf.Logger)
+	if err != nil {
+		panic(err)
+	}
+	go quandl.Init(conf.API["Quandl"], quandlLogger)
 
-	//go model.MonitorWatchlists()
+	//thread with a daily backup for the database
+	//go db.BackupDB(conf.Dump, conf.Database)
 
 	// Setup Server
 	listener, err := net.Listen("tcp", conf.Server.Address)
 	if err != nil {
 		term.Kill()
-		panic(err)
+		log.Fatal("Failed to create tcp listener with: ", err)
 	}
 
 	sl, err := stoppableListener.New(listener)
 	if err != nil {
 		term.Kill()
-		panic(err)
+		log.Fatal("Failed to create tcp listener with: ", err)
 	}
 
 	streamHandler := make(chan interface{})
-	socket.UpdateSubscribers(log, stream.ProcessStreams(log, streamHandler))
+	subscribersLog, err := logger.NewLogger("FrontEndUpdates", conf.Logger)
+	monitorLog, err := logger.NewLogger("TradekingMonitor", conf.Logger)
+	socket.UpdateSubscribers(subscribersLog, stream.ProcessStreams(monitorLog, streamHandler))
 
 	//establish endpoints
 	endpoints := mux.NewRouter()
@@ -119,9 +125,9 @@ func main() {
 }
 
 // Log wrapper function for the http server
-func Log(handler *mux.Router, log *logging.Logger) http.Handler {
+func Log(handler *mux.Router, log *logger.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		log.Info("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 		r.ParseForm()
 		handler.ServeHTTP(w, r)
 	})

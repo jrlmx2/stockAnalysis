@@ -8,15 +8,16 @@ import (
 )
 
 const (
-	sfindLike     = "select id, symbol from symbols where symbol Like '%%%s%%'"
-	sfindOne      = "select id, symbol from symbols where id='%d'"
-	sfindSymbols  = "select id, symbol from symbols where symbol in ('%s')"
-	sfindSymbol   = "select id, symbol from symbols where symbol = '%s'"
-	sfindMany     = "select id, symbol from symbols where id in (%s)"
-	sinsert       = "insert into symbols values (NULL,'%s',NULL)"
-	sdelete       = "delete from symbols where id=%d"
-	sinsertRecord = "(NULL, %s, NULL)"
-	qload         = "select * from quotes where symbol_id=%d"
+	sfindLike          = "select id, symbol from symbols where symbol Like '%%%s%%'"
+	sfindOne           = "select id, symbol from symbols where id='%d'"
+	sfindSymbols       = "select id, symbol from symbols where symbol in ('%s')"
+	sfindSymbol        = "select id, symbol from symbols where symbol = '%s'"
+	sfindMany          = "select id, symbol from symbols where id in (%s)"
+	sinsert            = "insert into symbols values (NULL,'%s',NULL)"
+	sdelete            = "delete from symbols where id=%d"
+	sinsertRecord      = "(NULL, %s, NULL)"
+	qload              = "select * from quotes where symbol_id=%d"
+	smovingAverageDays = "select moving_average(close, %d) from " + source + "_%s where time > now - %dd"
 )
 
 type Symbol struct {

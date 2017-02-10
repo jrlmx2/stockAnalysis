@@ -1,14 +1,63 @@
 package logger
 
 import (
+	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/jrlmx2/stockAnalysis/utils/config"
 	"github.com/op/go-logging"
 )
 
+type Logger struct {
+	log   *logging.Logger
+	print bool
+}
+
+func (l *Logger) Info(msg string, pluggins ...interface{}) {
+	l.log.Infof(msg, pluggins)
+	/*if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}*/
+}
+
+func (l *Logger) Debug(msg string, pluggins ...interface{}) {
+	l.log.Debugf(msg, pluggins)
+	/*if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}*/
+}
+func (l *Logger) Warn(msg string, pluggins ...interface{}) {
+	l.log.Warningf(msg, pluggins)
+	if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}
+}
+func (l *Logger) Error(msg string, pluggins ...interface{}) {
+	l.log.Errorf(msg, pluggins)
+	if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}
+}
+
+func (l *Logger) Critical(msg string, pluggins ...interface{}) {
+	l.log.Criticalf(msg, pluggins)
+	if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}
+	panic(fmt.Sprintf(msg, pluggins))
+}
+
+func (l *Logger) Fatal(msg string, pluggins ...interface{}) {
+	l.log.Fatalf(msg, pluggins)
+	if l.print {
+		fmt.Printf(msg+"\n", pluggins)
+	}
+	panic(fmt.Sprintf(msg, pluggins))
+}
+
 // NewLogger wraps the logger creation code
-func NewLogger(conf config.LogConfig) (*logging.Logger, error) {
+func NewLogger(name string, conf config.LogConfig) (*Logger, error) {
 	var log = logging.MustGetLogger(conf.Name)
 
 	if conf.Format == "" {
@@ -18,26 +67,26 @@ func NewLogger(conf config.LogConfig) (*logging.Logger, error) {
 
 	//regular log file
 	var stdlog *os.File
-	if _, err := os.Stat(conf.File + ".log"); err != nil {
-		stdlog, err = os.Create(conf.File + ".log")
+	if _, err := os.Stat(conf.File + name + ".log"); err != nil {
+		stdlog, err = os.Create(conf.File + name + ".log")
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		stdlog, err = os.Open(conf.File + ".log")
+		stdlog, err = os.Open(conf.File + name + ".log")
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	var stderr *os.File
-	if _, err := os.Stat(conf.File + ".err"); err != nil {
-		stderr, err = os.Create(conf.File + ".err")
+	if _, err := os.Stat(conf.File + name + ".err"); err != nil {
+		stderr, err = os.Create(conf.File + name + ".err")
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		stderr, err = os.Open(conf.File + ".err")
+		stderr, err = os.Open(conf.File + name + ".err")
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +116,12 @@ func NewLogger(conf config.LogConfig) (*logging.Logger, error) {
 	// Set the backends to be used.
 	logging.SetBackend(backend1Leveled, backend2Formatter)
 
-	return log, nil
+	shouldPrint, err := strconv.ParseBool(conf.Print)
+	if err != nil {
+		shouldPrint = false
+	}
+
+	return &Logger{log: log, print: shouldPrint}, nil
 }
 
 // Password is just an example type implementing the Redactor interface. Any

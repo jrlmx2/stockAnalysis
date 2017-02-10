@@ -1,11 +1,20 @@
 [Server]
 Address="localhost:8080"
 
+[API.SEC]
+Key="d7xnkg3nsrjqmpqfjbx3pcsu"
+URL="http://edgaronline.api.mashery.com/%s.json?%sappkey=%s"
+
+[API.Quandl]
+Key= "pxPgy1zxxg_kW1vY_PeX"
+URL= "http://www.quandl.com/api/v3/datasets/%s.%s"
+
 [Logger]
 Name="Server"
 Level="DEBUG"
-File="C:\\Users\\jrlmx\\golang\\src\\github.com\\jrlmx2\\stockAnalysis\\log\\rest"
+File="C:\\Users\\jrlmx\\golang\\src\\github.com\\jrlmx2\\stockAnalysis\\log\\"
 Format="%{color}%{time:15:04:05.000} Rest Server: %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}"
+Print="true"
 
 [Stocks]
 Symbols="TVIX,IMNP,UVXY,ETRM"
@@ -19,7 +28,7 @@ Schema="stocks"
 [InfluxDatabase]
 User="trades"
 Password="xEoQGTgTl7UEqGESSPaL"
-Host="http://192.168.80.128:8086"
+Host="http://192.168.80.131:8086"
 Schema="markets"
 
 

@@ -6,18 +6,17 @@ import (
 	"time"
 
 	"github.com/jrlmx2/stockAnalysis/model"
+	"github.com/jrlmx2/stockAnalysis/utils/logger"
 	"github.com/jrlmx2/stockAnalysis/utils/term"
-	"github.com/op/go-logging"
 )
 
-func ProcessStreams(log *logging.Logger, in chan interface{}) chan model.Unmarshalable {
+func ProcessStreams(log *logger.Logger, in chan interface{}) chan model.Unmarshalable {
 	out := make(chan model.Unmarshalable, 10000)
 
-	d, _ := time.ParseDuration("1s")
 	go func() {
 		for {
 			if term.WasTerminated() {
-				log.Warning("Thread was terminated")
+				log.Warn("Thread was terminated")
 				log.Info("Stream monitor was terminated.")
 				return
 			}
@@ -28,19 +27,19 @@ func ProcessStreams(log *logging.Logger, in chan interface{}) chan model.Unmarsh
 					fmt.Println("Found new stream")
 				} else {
 					fmt.Printf("\n\nChannel was closed @ %+v\n\n", time.Now().UTC().String())
-					log.Warning("Channel closed!")
+					log.Warn("Channel closed!")
 				}
 			default:
 				log.Info("No stream ready, moving on.")
 			}
-			time.Sleep(d)
+			time.Sleep(time.Second)
 		}
 	}()
 
 	return out
 }
 
-func streamListener(reader Stream, out chan model.Unmarshalable, log *logging.Logger) {
+func streamListener(reader Stream, out chan model.Unmarshalable, log *logger.Logger) {
 	content := ""
 	for {
 		if term.WasTerminated() {
@@ -50,8 +49,7 @@ func streamListener(reader Stream, out chan model.Unmarshalable, log *logging.Lo
 
 		line, err := reader.Connection().ReadString('>')
 		if err != nil {
-			fmt.Printf("Error reading from stream: %s\n\n", err)
-			log.Errorf("Error reading from stream: %s", err)
+			log.Error("Error reading from stream: %s", err)
 			//connection was closed, try again then kill this thread
 			reader.Reopen()
 			fmt.Printf("\n\nOpened Stream.\n\n")
@@ -70,7 +68,7 @@ func streamListener(reader Stream, out chan model.Unmarshalable, log *logging.Lo
 
 			parsedContent, err := unmarshal(strings.Trim(strings.Trim(content, "\n"), " "))
 			if err != nil {
-				log.Warningf("Unmarshalling string %s failed with %s", content, err)
+				log.Warn("Unmarshalling string %s failed with %s", content, err)
 			}
 			out <- parsedContent
 			content = ""

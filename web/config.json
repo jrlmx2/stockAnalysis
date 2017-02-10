@@ -1,0 +1,23 @@
+{
+  "production":true,
+  "usingCoffee":true,
+  "usingLess":true,
+  "paths":{
+      "appDir":"./app",
+      "buildDir":"./build",
+      "coffeeDest":"./app/js",
+      "cssDest":"/css",
+      "jsDest":"/js",
+      "js": ["./app/**/.js"],
+      "coffee": ["./app/js/**/*.coffee"],
+      "less":["./app/**/*.less"],
+      "css": ["./app/**/*.css"],
+      "inject":["./app/**/*.css","./app/**/*.js"],
+      "images": "./img/**/*",
+      "templates": "./app/templates",
+      "minifiedScript":"all.min.js",
+      "page":"app/index.html"
+  },
+  "uglify":{},
+  "less":{}
+}

@@ -1,9 +1,10 @@
 package model
 
-import logging "github.com/op/go-logging"
+import "github.com/jrlmx2/stockAnalysis/utils/logger"
 
-var logger *logging.Logger
+var log *logger.Logger
 
-func SetLogger(l *logging.Logger) {
-	logger = l
+func SetLogger(l *logger.Logger) {
+	log = l
+	log.Info("Model start...")
 }

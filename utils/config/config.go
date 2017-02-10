@@ -12,6 +12,7 @@ import (
 type Config struct {
 	API            map[string]API
 	Logger         LogConfig
+	QuandlLog      LogConfig
 	Database       Database
 	InfluxDatabase Database
 	Server         Server
@@ -32,10 +33,12 @@ type LogConfig struct {
 	Level  string
 	File   string
 	Format string
+	Print  string
 }
 
 // API contains options and authentication values for API connectivity and query
 type API struct {
+	URL         string
 	Key         string
 	Secret      string
 	OAuthToken  string

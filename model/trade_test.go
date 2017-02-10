@@ -1,31 +1,14 @@
 package model
 
-import (
-	"fmt"
-	"testing"
+import "testing"
 
-	"github.com/jrlmx2/stockAnalysis/utils/config"
-	"github.com/jrlmx2/stockAnalysis/utils/influxdb"
-	"github.com/jrlmx2/stockAnalysis/utils/mariadb"
-)
-
-func setup() {
-	conf := config.ReadConfigPath("./test.conf")
-
-	pool, err := mariadb.NewPool(conf.Database)
-	fmt.Println(err)
-	if err != nil {
-		panic(err)
-	}
-	SetRepository(pool)
-}
 func setupInflux() {
-	conf := config.ReadConfigPath("./test.conf")
-	influxdb.Setup(conf.InfluxDatabase)
+	//conf := config.ReadConfigPath("./test.conf")
+	//influxdb.Setup(conf.InfluxDatabase)
 }
 
 func TestTradeSave001(t *testing.T) {
-	if testing.Short() {
+	/*if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
 	setup()
@@ -40,5 +23,5 @@ func TestTradeSave001(t *testing.T) {
 	fmt.Println("Saving")
 	tr.Save()
 
-	fmt.Println("Saved")
+	fmt.Println("Saved")*/
 }
