@@ -2,11 +2,11 @@
 Address="localhost:8080"
 
 [API.SEC]
-Key="d7xnkg3nsrjqmpqfjbx3pcsu"
+Key=""
 URL="http://edgaronline.api.mashery.com/%s.json?%sappkey=%s"
 
 [API.Quandl]
-Key= "pxPgy1zxxg_kW1vY_PeX"
+Key= ""
 URL= "http://www.quandl.com/api/v3/datasets/%s.%s"
 
 [Logger]
@@ -27,7 +27,7 @@ Schema="stocks"
 
 [InfluxDatabase]
 User="trades"
-Password="xEoQGTgTl7UEqGESSPaL"
+Password=""
 Host="http://192.168.80.131:8086"
 Schema="markets"
 
