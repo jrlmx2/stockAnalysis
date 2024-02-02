@@ -12,13 +12,13 @@ Symbols="TVIX,IMNP,UVXY,ETRM"
 
 [Database]
 User="stockAnalysisDev"
-Password="root"
+Password=""
 Host="localhost:3306"
 Schema="stocks_dev"
 
 [InfluxDatabase]
 User="trades"
-Password="xEoQGTgTl7UEqGESSPaL"
+Password=""
 Host="http://192.168.80.128:8086"
 Schema="markets_dev"
 
